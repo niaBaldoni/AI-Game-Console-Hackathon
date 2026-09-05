@@ -24,6 +24,7 @@ const PACK := [
 @onready var hud: MeadowHud = $HUD
 @onready var obstacles: Node2D = $Obstacles
 
+var pause_menu: MeadowPauseMenu
 var _next_enemy_runtime_id: int = 1
 var _summary_refresh_timer: float = 0.0
 
@@ -49,6 +50,7 @@ func _ready() -> void:
     hud.bind_player(player, WORLD_SIZE)
     hud.set_player_health(player.health, player.max_health)
     AgentBridge.enemy_spawn_requested.connect(_on_enemy_spawn_requested)
+    _setup_pause_menu()
 
     _publish_agent_summary()
     queue_redraw()
@@ -302,6 +304,48 @@ func _on_player_health_changed(current_health: int, maximum_health: int) -> void
 
 func _on_player_defeated() -> void:
     hud.show_message("YOU FELL")
+    if pause_menu != null:
+        pause_menu.open_defeated()
+
+
+func _setup_pause_menu() -> void:
+    pause_menu = MeadowPauseMenu.new()
+    pause_menu.name = "PauseMenu"
+    pause_menu.process_mode = Node.PROCESS_MODE_ALWAYS
+    add_child(pause_menu)
+    pause_menu.play_selected.connect(_on_menu_play)
+    pause_menu.back_selected.connect(_on_menu_back)
+    pause_menu.restart_selected.connect(_on_menu_restart)
+    pause_menu.quit_selected.connect(_on_menu_quit)
+    if MeadowPauseMenu.start_in_game:
+        MeadowPauseMenu.start_in_game = false
+        get_tree().paused = false
+    else:
+        pause_menu.open_title()
+
+
+func _on_menu_play() -> void:
+    get_tree().paused = false
+
+
+func _on_menu_back() -> void:
+    MeadowPauseMenu.start_in_game = false
+    _reload_meadow()
+
+
+func _on_menu_restart() -> void:
+    MeadowPauseMenu.start_in_game = true
+    _reload_meadow()
+
+
+func _on_menu_quit() -> void:
+    get_tree().paused = false
+    get_tree().quit()
+
+
+func _reload_meadow() -> void:
+    get_tree().paused = false
+    get_tree().reload_current_scene()
 
 
 func _on_enemy_health_changed(
