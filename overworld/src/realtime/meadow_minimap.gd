@@ -34,7 +34,7 @@ func _draw() -> void:
     if player == null or not is_instance_valid(player):
         return
 
-    var map_rotation := -player.facing.angle() - PI * 0.5
+    var map_rotation := 0.0
     _draw_world_features(center, radius, map_rotation)
     _draw_enemy_blips(center, radius, map_rotation)
     _draw_player_arrow(center)
@@ -80,11 +80,12 @@ func _draw_enemy_blips(center: Vector2, radius: float, map_rotation: float) -> v
 
 
 func _draw_player_arrow(center: Vector2) -> void:
+    var heading := player.facing.angle() + PI * 0.5
     var points := PackedVector2Array([
-        center + Vector2(0.0, -9.0),
-        center + Vector2(7.0, 8.0),
-        center + Vector2(0.0, 4.0),
-        center + Vector2(-7.0, 8.0),
+        center + Vector2(0.0, -9.0).rotated(heading),
+        center + Vector2(7.0, 8.0).rotated(heading),
+        center + Vector2(0.0, 4.0).rotated(heading),
+        center + Vector2(-7.0, 8.0).rotated(heading),
     ])
     draw_colored_polygon(points, Color("#f4f7ff"))
     draw_polyline(points, Color("#1b2430"), 1.4, true)
