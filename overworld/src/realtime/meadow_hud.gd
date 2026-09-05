@@ -91,7 +91,7 @@ func _build_ui() -> void:
     var title := _make_label("OPEN MEADOW", Vector2(16.0, 10.0), 18)
     title.add_theme_color_override("font_color", Color("#f2c14e"))
 
-    var controls := _make_label("JOYSTICK MOVE   A SWING", Vector2(16.0, 38.0), 14)
+    var controls := _make_label("JOYSTICK MOVE   A SWING   B PAUSE", Vector2(16.0, 38.0), 14)
     controls.add_theme_color_override("font_color", Color("#d8e7ff"))
 
     _player_label = _make_label("YOU  6 / 6", Vector2(16.0, 60.0), 14)
