@@ -21,7 +21,8 @@ state. This is a game-control interface, not a code-editing interface.
 ## Available tools
 
 - `get_game_state`: read the player and active enemy summary (includes player
-  `power` and `shield` when those pickups are active).
+  `power` and `shield` when those pickups are active), plus `defeated_enemies`,
+  `defeat_target`, and `victory` progress.
 - `set_agent_intent`: publish one bounded opponent intent: `idle`, `left`,
   `right`, or `act`.
 - `spawn_enemy`: request one enemy at explicit meadow coordinates; omit health
