@@ -36,6 +36,9 @@ const FIREBALL_SCENE := preload("res://src/realtime/meadow_fireball.gd")
 @export var charged_fireball_damage: int = 2
 @export var charged_fireball_speed: float = 210.0
 @export var charged_fireball_radius: float = 16.0
+@export var fireball_visual_radius: float = 8.0
+@export var fireball_hit_radius: float = 3.5
+@export var charged_fireball_hit_radius: float = 6.5
 
 var health: int = 0
 var runtime_id: int = 0
@@ -98,6 +101,9 @@ func apply_kind(enemy_kind: Kind) -> void:
             charged_fireball_damage = 2
             charged_fireball_speed = 210.0
             charged_fireball_radius = 16.0
+            fireball_visual_radius = 8.0
+            fireball_hit_radius = 3.5
+            charged_fireball_hit_radius = 6.5
             knockback_speed = 150.0
             _body_color = Color("#7a4ad1")
 
@@ -281,10 +287,18 @@ func _spawn_fireball(charged: bool = false) -> void:
             facing,
             charged_fireball_damage,
             charged_fireball_speed,
-            charged_fireball_radius
+            charged_fireball_radius,
+            charged_fireball_hit_radius
         )
     else:
-        fireball.setup(origin, facing, attack_damage, fireball_speed, 7.0)
+        fireball.setup(
+            origin,
+            facing,
+            attack_damage,
+            fireball_speed,
+            fireball_visual_radius,
+            fireball_hit_radius
+        )
     parent.add_child(fireball)
 
 
