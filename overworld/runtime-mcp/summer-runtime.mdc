@@ -26,7 +26,7 @@ state. This is a game-control interface, not a code-editing interface.
   `right`, or `act`.
 - `spawn_enemy`: request one enemy at explicit meadow coordinates; omit health
   to use the kind default (brute 3, mage 2). The game owns node creation and
-  rejects a full roster.
+  accepts up to 50 active enemies before rejecting a full roster.
 
 If a tool reports `game_unavailable`, start the Open Meadow game and retry once.
 Do not attempt arbitrary filesystem, shell, scene-tree, script, or network

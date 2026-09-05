@@ -71,7 +71,7 @@ TOOLS = [
         "description": (
             "Queue one real-time enemy spawn in the running Open Meadow. "
             "Pass kind brute (melee) or mage (ranged). The game owns the enemy node "
-            "and enforces its live roster limit."
+            "and enforces its live roster limit of 50 active enemies."
         ),
         "inputSchema": {
             "type": "object",

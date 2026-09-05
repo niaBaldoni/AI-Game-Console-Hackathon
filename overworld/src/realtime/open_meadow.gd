@@ -2,7 +2,7 @@ extends Node2D
 class_name OpenMeadow
 
 const WORLD_SIZE := Vector2(2400.0, 1350.0)
-const MAX_ACTIVE_ENEMIES := 8
+const MAX_ACTIVE_ENEMIES := 50
 const SPAWN_MARGIN := 24.0
 const OBSTACLES := [
     {"position": Vector2(890.0, 350.0), "size": Vector2(170.0, 42.0)},

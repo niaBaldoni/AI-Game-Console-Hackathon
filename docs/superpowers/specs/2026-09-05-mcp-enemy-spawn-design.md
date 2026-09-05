@@ -11,7 +11,7 @@ the active enemy list.
 
 The first milestone adds one MCP tool, `spawn_enemy`, to the existing
 `get_game_state` and `set_agent_intent` tools. It supports bounded explicit
-positions and optional health. The game accepts at most eight active enemies
+positions and optional health. The game accepts at most fifty active enemies
 and clamps no values silently: invalid requests return a structured error.
 
 The existing sword attack already targets a single enemy. It will be updated
@@ -110,7 +110,7 @@ removed after their feedback window, freeing slots for later spawn requests.
 3. Start Open Meadow and use a `RunVerification` probe to call the game-side
    spawn path, confirm a second enemy appears in `get_game_state`, move toward
    it, and confirm A/Space sword damage changes only that enemy.
-4. Spawn eight enemies and confirm the ninth request returns
+4. Spawn fifty enemies and confirm the fifty-first request returns
    `enemy_limit_reached`.
 5. Check the running frame and Summer console/debugger for errors or warnings.
 
@@ -123,7 +123,7 @@ turn-based source remain deferred.
 ## Update: spawn kinds (5 Sep 2026)
 
 `spawn_enemy` now accepts an optional `kind` of `brute`/`melee` or `mage`/`ranged`.
-The game still owns bounds, roster limit, and node creation. If `health` is
+The game still owns bounds, a 50-enemy roster limit, and node creation. If `health` is
 omitted, the kind's default HP is used (brute 3, mage 2). Those defaults are
 fodder stats, not bosses.
 
@@ -132,4 +132,3 @@ fodder stats, not bosses.
 `get_game_state` player payload also includes `power` and `shield` booleans
 when those timed pickups are active. The game still owns timers and combat
 math; the MCP tools do not grant pickups.
-
