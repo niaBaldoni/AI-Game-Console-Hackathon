@@ -2,9 +2,6 @@ extends Control
 class_name MeadowMinimap
 
 const RADAR_RANGE := 560.0
-const EASY_COLOR := Color("#7dff8a")
-const TOUGH_COLOR := Color("#ffd35c")
-const BRUTE_COLOR := Color("#ff5b5b")
 
 var player: MeadowPlayer
 var world_size: Vector2 = Vector2(2400.0, 1350.0)

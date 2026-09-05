@@ -8,13 +8,13 @@ const OBSTACLES := [
     {"position": Vector2(1790.0, 440.0), "size": Vector2(150.0, 42.0)},
 ]
 const PACK := [
-    {"position": Vector2(600.0, 270.0), "difficulty": MeadowEnemy.Difficulty.SCOUT},
-    {"position": Vector2(980.0, 430.0), "difficulty": MeadowEnemy.Difficulty.SCOUT},
-    {"position": Vector2(390.0, 920.0), "difficulty": MeadowEnemy.Difficulty.HUNTER},
-    {"position": Vector2(1480.0, 640.0), "difficulty": MeadowEnemy.Difficulty.HUNTER},
-    {"position": Vector2(760.0, 1120.0), "difficulty": MeadowEnemy.Difficulty.SCOUT},
-    {"position": Vector2(1980.0, 300.0), "difficulty": MeadowEnemy.Difficulty.BRUTE},
-    {"position": Vector2(2080.0, 1120.0), "difficulty": MeadowEnemy.Difficulty.HUNTER},
+    {"position": Vector2(720.0, 270.0), "kind": MeadowEnemy.Kind.MELEE},
+    {"position": Vector2(980.0, 430.0), "kind": MeadowEnemy.Kind.RANGED},
+    {"position": Vector2(390.0, 920.0), "kind": MeadowEnemy.Kind.MELEE},
+    {"position": Vector2(1480.0, 640.0), "kind": MeadowEnemy.Kind.RANGED},
+    {"position": Vector2(760.0, 1120.0), "kind": MeadowEnemy.Kind.RANGED},
+    {"position": Vector2(1980.0, 300.0), "kind": MeadowEnemy.Kind.MELEE},
+    {"position": Vector2(2080.0, 1120.0), "kind": MeadowEnemy.Kind.RANGED},
 ]
 
 @onready var player: MeadowPlayer = $Player
@@ -30,7 +30,11 @@ func _ready() -> void:
 
     player.attack_started.connect(_on_player_attack_started)
     player.attack_hit.connect(_on_player_attack_hit)
+    player.damaged.connect(_on_player_damaged)
+    player.defeated.connect(_on_player_defeated)
+    player.health_changed.connect(_on_player_health_changed)
     hud.bind_player(player, WORLD_SIZE)
+    hud.set_player_health(player.health, player.max_health)
     queue_redraw()
 
 
@@ -111,7 +115,7 @@ func _add_boundary(center: Vector2, size: Vector2, node_name: String) -> void:
 func _spawn_pack() -> void:
     var first_spec: Dictionary = PACK[0]
     enemy.position = first_spec["position"]
-    enemy.apply_difficulty(first_spec["difficulty"])
+    enemy.apply_kind(first_spec["kind"])
     _wire_enemy(enemy)
 
     for index in range(1, PACK.size()):
@@ -120,13 +124,16 @@ func _spawn_pack() -> void:
         spawned.name = "Enemy%d" % index
         spawned.position = spec["position"]
         add_child(spawned)
-        spawned.apply_difficulty(spec["difficulty"])
+        spawned.apply_kind(spec["kind"])
         _wire_enemy(spawned)
 
 
 func _wire_enemy(foe: MeadowEnemy) -> void:
+    foe.set_player(player)
     if not foe.defeated.is_connected(_on_enemy_defeated):
         foe.defeated.connect(_on_enemy_defeated)
+    if not foe.attack_hit.is_connected(_on_enemy_attack_hit):
+        foe.attack_hit.connect(_on_enemy_attack_hit)
 
 
 func _on_player_attack_started() -> void:
@@ -135,6 +142,22 @@ func _on_player_attack_started() -> void:
 
 func _on_player_attack_hit(_target: MeadowEnemy, _damage: int) -> void:
     hud.show_message("HIT!")
+
+
+func _on_enemy_attack_hit(_target: MeadowPlayer, _damage: int) -> void:
+    hud.show_message("YOU WERE HIT")
+
+
+func _on_player_damaged(_amount: int) -> void:
+    hud.show_message("YOU WERE HIT")
+
+
+func _on_player_health_changed(current_health: int, maximum_health: int) -> void:
+    hud.set_player_health(current_health, maximum_health)
+
+
+func _on_player_defeated() -> void:
+    hud.show_message("YOU FELL")
 
 
 func _on_enemy_defeated() -> void:
