@@ -38,6 +38,14 @@ Cursor agent
   -> get_game_state reports player + active enemies
 ```
 
+On a desktop, the game bridge accepts the loopback TCP request directly. On an
+Uno Q deployment, the game runs inside App Lab's `game_runner` container, so
+the bridge also polls `/game/game/.runtime-mcp`. The host-side MCP client maps
+that mount to `/home/arduino/ArduinoApps/open-meadow/game/.runtime-mcp` and
+exchanges atomically renamed request/response files. This keeps the transport
+local to the board without exposing a container port or requiring ad-hoc
+board-side Docker configuration.
+
 `AgentBridge` never instantiates gameplay nodes. It validates request shape and
 basic meadow coordinate limits, assigns a monotonically increasing request
 identifier, emits the request signal, and returns an acknowledgement. The

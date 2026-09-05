@@ -1,7 +1,8 @@
 extends Node
 class_name RuntimeAgentBridge
 
-## Loopback bridge between a running Summer/Godot game and runtime-mcp/server.py.
+## Bridge between a running Summer/Godot game and runtime-mcp/server.py.
+## Desktop uses loopback TCP; the Uno Q App Lab runner uses the shared app mount.
 ## Add this script as an Autoload named "AgentBridge" in the game project.
 
 signal agent_intent_changed(intent: String)
@@ -27,11 +28,18 @@ var _revision := 0
 var _summary: Dictionary = {}
 var _next_spawn_request_id := 1
 var _spawn_resolutions: Dictionary = {}
+var _file_bridge_dir: String = ""
 
 
 func _ready() -> void:
+	_file_bridge_dir = ProjectSettings.globalize_path("res://.runtime-mcp")
+	if DirAccess.make_dir_recursive_absolute(_file_bridge_dir) == OK:
+		_clear_file_bridge_files()
+	else:
+		_file_bridge_dir = ""
+
 	var error := _server.listen(listen_port, listen_host)
-	if error != OK:
+	if error != OK and _file_bridge_dir.is_empty():
 		push_error("AgentBridge could not listen on %s:%d (error %d)" % [listen_host, listen_port, error])
 		return
 	set_process(true)
@@ -46,6 +54,8 @@ func _exit_tree() -> void:
 
 
 func _process(_delta: float) -> void:
+	_process_file_requests()
+
 	while _server.is_connection_available():
 		var peer := _server.take_connection()
 		if peer == null:
@@ -86,6 +96,63 @@ func _process(_delta: float) -> void:
 		var response := _handle_request(line)
 		_send_and_close(peer, response)
 		_clients.remove_at(index)
+
+
+func _process_file_requests() -> void:
+	if _file_bridge_dir.is_empty():
+		return
+
+	var directory := DirAccess.open(_file_bridge_dir)
+	if directory == null:
+		return
+
+	directory.list_dir_begin()
+	var processed := 0
+	var file_name := directory.get_next()
+	while not file_name.is_empty() and processed < 8:
+		if not directory.current_is_dir() and file_name.begins_with("request-") and file_name.ends_with(".json"):
+			var request_id := file_name.trim_prefix("request-").trim_suffix(".json")
+			if _valid_file_request_id(request_id):
+				var request_path := _file_bridge_dir.path_join(file_name)
+				var request_line := FileAccess.get_file_as_string(request_path)
+				var response := _handle_request(request_line)
+				_write_file_response(request_id, response)
+				DirAccess.remove_absolute(request_path)
+				processed += 1
+		file_name = directory.get_next()
+	directory.list_dir_end()
+
+
+func _valid_file_request_id(request_id: String) -> bool:
+	return not request_id.is_empty() and request_id.length() <= 64 and not request_id.contains("/") and not request_id.contains("\\") and not request_id.contains("..")
+
+
+func _write_file_response(request_id: String, response: Dictionary) -> void:
+	var response_path := _file_bridge_dir.path_join("response-%s.json" % request_id)
+	var temporary_path := _file_bridge_dir.path_join(".response-%s.tmp" % request_id)
+	var file := FileAccess.open(temporary_path, FileAccess.WRITE)
+	if file == null:
+		return
+	var response_with_id := response.duplicate(true)
+	response_with_id["id"] = request_id
+	file.store_string(JSON.stringify(response_with_id))
+	file.close()
+	DirAccess.rename_absolute(temporary_path, response_path)
+
+
+func _clear_file_bridge_files() -> void:
+	if _file_bridge_dir.is_empty():
+		return
+	var directory := DirAccess.open(_file_bridge_dir)
+	if directory == null:
+		return
+	directory.list_dir_begin()
+	var file_name := directory.get_next()
+	while not file_name.is_empty():
+		if not directory.current_is_dir() and (file_name.begins_with("request-") or file_name.begins_with("response-") or file_name.begins_with(".response-")):
+			DirAccess.remove_absolute(_file_bridge_dir.path_join(file_name))
+		file_name = directory.get_next()
+	directory.list_dir_end()
 
 
 func publish_summary(summary: Dictionary) -> void:

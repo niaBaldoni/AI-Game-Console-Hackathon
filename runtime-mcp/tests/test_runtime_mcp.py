@@ -5,7 +5,9 @@ import os
 import socketserver
 import subprocess
 import sys
+import tempfile
 import threading
+import time
 import unittest
 from pathlib import Path
 from typing import Any
@@ -14,7 +16,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from game_client import BridgeClient  # noqa: E402
+from game_client import BridgeClient, FileBridgeClient  # noqa: E402
 
 
 class MockState:
@@ -107,6 +109,51 @@ class RuntimeMcpTests(unittest.TestCase):
         self.assertTrue(spawned["queued"])
         self.assertEqual(spawned["health"], 4)
         self.assertEqual(client.request("get_game_state", {})["enemies"][0]["id"], 1)
+
+    def test_file_bridge_client_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            directory_path = Path(directory)
+
+            def game_worker() -> None:
+                deadline = time.monotonic() + 2.0
+                request_path: Path | None = None
+                while time.monotonic() < deadline:
+                    requests = list(directory_path.glob("request-*.json"))
+                    if requests:
+                        request_path = requests[0]
+                        break
+                    time.sleep(0.01)
+                if request_path is None:
+                    raise AssertionError("file bridge request was not written")
+
+                request = json.loads(request_path.read_text(encoding="utf-8"))
+                response_path = directory_path / f"response-{request['id']}.json"
+                temporary_path = directory_path / f".response-{request['id']}.tmp"
+                temporary_path.write_text(
+                    json.dumps(
+                        {
+                            "id": request["id"],
+                            "ok": True,
+                            "result": {
+                                "agent_intent": "idle",
+                                "revision": 1,
+                                "summary": {"file_mock": True},
+                            },
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                temporary_path.replace(response_path)
+
+            worker = threading.Thread(target=game_worker)
+            worker.start()
+            state = FileBridgeClient(directory=directory, timeout=2.0).request(
+                "get_game_state", {}
+            )
+            worker.join(timeout=2.0)
+
+        self.assertEqual(state["summary"]["file_mock"], True)
+        self.assertEqual(state["revision"], 1)
 
     def test_stdio_mcp_discovers_and_calls_tools(self) -> None:
         env = os.environ.copy()

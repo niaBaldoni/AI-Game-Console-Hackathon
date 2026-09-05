@@ -1,44 +1,39 @@
-# Godot 4 Open RPG
+# Open Meadow
 
-![Godot Open RPG banner](media/Open-RPG.png)
+Open Meadow is a lightweight top-down real-time slice for the Arduino Uno Q.
+The active game is a large, open meadow with free joystick movement, a short
+range sword swing on button A, and enemies that can be spawned and observed by
+the runtime MCP bridge.
 
-OpenRPG is a a demo showing how to create a classical turn-based RPG in Godot 4. It's currently a work-in-progress.
+## Controls
 
-**You need to use Godot 4.5 to open the project!** You can find Godot 4.5 on the [Godot website](https://godotengine.org/).
+- Joystick: move in eight directions.
+- A: swing the sword.
 
-➡ Follow us on [Twitter](https://twitter.com/NathanGDQuest) and [YouTube](https://www.youtube.com/c/gdquest/) for Godot tips and tutorials! Get one of our [Godot game creation courses](https://www.gdquest.com/product/) to support our work on Free Software.
+Desktop development also accepts the Space key as a fallback for button A; it
+is not part of the handheld-facing HUD.
 
-## Project Goal
+## Runtime MCP
 
-The goal of this project is to provide the gamedev community with a demo that shows one solid way to create and structure the code for a 2D RPG in Godot 4. You can reuse the code in your own projects, and also learn from the project's codebase.
+Start the game, then run Cursor CLI from this checkout. The project-local MCP
+configuration starts `../runtime-mcp/server.py` and exposes:
 
-As we're teachers, our focus is on providing a learning resource that is both practical and educational. We're not trying to build a framework.
+- `get_game_state` — read the player and active enemy state.
+- `set_agent_intent` — publish a bounded opponent intent.
+- `spawn_enemy` — request an enemy at bounded meadow coordinates with optional
+  health.
 
-We're putting heavy emphasis on code that:
+The game remains authoritative: `AgentBridge` validates the request and emits
+it, while `OpenMeadow` owns enemy creation, roster limits, and state
+publication.
 
-- Is updated to take advantage of what GDScript 4 has to offer.
-- Is accessible to users with solid code foundations. It should be a good starting point and reference for those diving into an RPG project.
-- Follows our [GDScript guidelines](https://gdquest.gitbook.io/gdquests-guidelines/godot-gdscript-guidelines).
+## Arduino Uno Q
 
-## Our Mission
+The project is configured for the Uno Q Linux side: compatibility rendering,
+ETC2/ASTC texture imports, a 960×540 viewport, and the Linux arm64 release
+preset in `export_presets.cfg`. Follow `~/summer-uno-q/SKILL.md` for export and
+deployment.
 
-Together, we're creating a codebase and tools to show you some good Godot practices to create:
+## License and credits
 
-- Turn-based games.
-- A combat system.
-- An inventory system.
-- Character progression.
-- Maps with transitions, dialogues, grid-based movement, and more.
-- User interface with multiple menus.
-
-And more! Do you want to contribute and improve your programming skills with Godot? Check out the open issues, suggest improvements and report bugs by opening new ones, and be sure to check the contributing guidelines below.
-
-## Credits
-
-The project uses the asset pack [Tiny Town by Kenney](https://kenney.nl/assets/tiny-town).
-
-## Contributing Guidelines
-
-All contributors are welcome 🙂. To ensure a smooth and a productive experience for everyone working together, we came up with some guidelines we all follow here.
-
-Check our [Contributors Guide](https://gdquest.gitbook.io/gdquests-guidelines/contributing-to-gdquest-projects/) for more information 😄
+See [`LICENSE`](LICENSE) and [`CREDITS.md`](CREDITS.md).

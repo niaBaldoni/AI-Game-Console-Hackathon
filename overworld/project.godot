@@ -16,110 +16,15 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Open Meadow"
 config/version="0.1.0"
-run/main_scene="res://src/realtime/open_meadow.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 run/max_fps=60
 config/icon="res://icon.svg"
+run/main_scene="res://src/realtime/open_meadow.tscn"
 
 [autoload]
 
 UnoQBoot="*res://src/board/uno_q_boot.gd"
 AgentBridge="*res://src/realtime/agent_bridge.gd"
-Camera="*res://src/field/field_camera.gd"
-CombatEvents="*res://src/combat/combat_events.gd"
-FieldEvents="*res://src/field/field_events.gd"
-Gameboard="*res://src/field/gameboard/gameboard.gd"
-GamepieceRegistry="*res://src/field/gamepieces/gamepiece_registry.gd"
-Music="*res://src/common/music/music_player.tscn"
-Player="*res://src/common/player.gd"
-Transition="*res://src/common/screen_transitions/ScreenTransition.tscn"
-Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
-
-[dialogic]
-
-text/skippable=true
-text/skippable_delay=0.05
-text/autoadvance_delay=1.0
-text/hide_empty_textbox=true
-animations/join_default_length=0.0
-animations/leave_default_length=0.0
-animations/leave_default_wait=false
-animations/join_default_wait=false
-choices/autofocus_first=true
-choices/delay=0.2
-choices/reveal_delay=0
-choices/reveal_by_input=false
-save/autosave_delay=60.0
-text/autopauses={}
-glossary/default_case_sensitive=true
-layout/mode=2
-variables={
-"BlueWandCount": 0,
-"GreenWandCount": 0,
-"HasMonkToken": 0,
-"HasThiefToken": 0,
-"HasWarriorToken": 0,
-"HasWizardToken": 0,
-"Hint": 0,
-"RedWandCount": 0,
-"StrangeTreeExamined": 0,
-"TokenCount": 0,
-"TokenQuestStatus": 0
-}
-layout/end_behaviour=0
-layout/styles={
-"Default": {
-"export_overrides": {},
-"inherits": "",
-"layout": "res://dialogue_layout.tscn"
-}
-}
-layout/default_style="Default"
-text/letter_speed=0.02
-animations/join_default="Instant In"
-animations/leave_default="Instant Out"
-text/autocolor_names=true
-settings/text_speed=1.0
-directories/dch_directory={
-"enemy_ghost": "res://overworld/maps/town/enemy_ghost.dch",
-"fan_of_four": "res://overworld/maps/town/fan_of_four.dch",
-"ghost": "res://overworld/maps/forest/ghost.dch",
-"monk": "res://overworld/maps/town/monk.dch",
-"runner": "res://overworld/maps/town/runner.dch",
-"smith": "res://overworld/maps/town/smith.dch",
-"thief": "res://overworld/maps/town/thief.dch",
-"warrior": "res://overworld/maps/town/warrior.dch",
-"wizard": "res://overworld/maps/town/wizard.dch"
-}
-directories/dtl_directory={
-"encounter_before_combat": "res://overworld/maps/town/encounter_before_combat.dtl",
-"encounter_on_loss": "res://overworld/maps/town/encounter_on_loss.dtl",
-"encounter_on_victory": "res://overworld/maps/town/encounter_on_victory.dtl",
-"fan_of_four": "res://overworld/maps/town/fan_of_four.dtl",
-"ghost": "res://overworld/maps/forest/ghost.dtl",
-"monk": "res://overworld/maps/town/monk.dtl",
-"opening_cutscene": "res://overworld/maps/opening_cutscene.dtl",
-"runner": "res://overworld/maps/town/runner.dtl",
-"sign": "res://overworld/maps/town/sign.dtl",
-"smith": "res://overworld/maps/town/smith.dtl",
-"strange_tree": "res://overworld/maps/town/strange_tree.dtl",
-"thief": "res://overworld/maps/town/thief.dtl",
-"wand_pedestal": "res://overworld/maps/house/wand_pedestal.dtl",
-"wand_pedestal_occupied": "res://overworld/maps/house/wand_pedestal_occupied.dtl",
-"warrior": "res://overworld/maps/town/warrior.dtl",
-"wizard": "res://overworld/maps/town/wizard.dtl"
-}
-text/initial_text_reveal_skippable=true
-text/text_reveal_skip_delay=0.05
-text/autoadvance_per_character_delay=0.1
-text/autoadvance_ignored_characters_enabled=true
-save/encryption_on_exports_only=true
-text/advance_delay=0.1
-portraits/default_portrait=""
-layout/style_list=[]
-extensions_folder="res://addons/dialogic_additions"
-audio/max_channels=4.0
-animations/cross_fade_default_length=0.5
 
 [display]
 
@@ -127,22 +32,12 @@ window/size/viewport_width=960
 window/size/viewport_height=540
 window/stretch/mode="viewport"
 
-[dotnet]
-
-project/assembly_name="OpenRPG"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/dialogic/plugin.cfg")
-
 [filesystem]
 
 import/blender/enabled=false
 import/fbx/enabled=false
 
 [gui]
-
-theme/custom="res://assets/gui/default.theme"
 
 [input]
 

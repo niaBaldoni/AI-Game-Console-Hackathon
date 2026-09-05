@@ -1,9 +1,9 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene format=3 uid="uid://rtstnkccuc25"]
 
-[ext_resource type="Script" path="res://src/realtime/open_meadow.gd" id="1_meadow"]
-[ext_resource type="Script" path="res://src/realtime/meadow_player.gd" id="2_player"]
-[ext_resource type="Script" path="res://src/realtime/meadow_enemy.gd" id="3_enemy"]
-[ext_resource type="Script" path="res://src/realtime/meadow_hud.gd" id="4_hud"]
+[ext_resource type="Script" uid="uid://bmis26doysb3t" path="res://src/realtime/open_meadow.gd" id="1_meadow"]
+[ext_resource type="Script" uid="uid://cl4jfvg4nefcw" path="res://src/realtime/meadow_player.gd" id="2_player"]
+[ext_resource type="Script" uid="uid://8ka1om6dqfma" path="res://src/realtime/meadow_enemy.gd" id="3_enemy"]
+[ext_resource type="Script" uid="uid://c3t0u0yea2l8j" path="res://src/realtime/meadow_hud.gd" id="4_hud"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(18, 18)
@@ -11,38 +11,34 @@ size = Vector2(18, 18)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_enemy"]
 size = Vector2(24, 24)
 
-[node name="OpenMeadow" type="Node2D"]
+[node name="OpenMeadow" type="Node2D" unique_id=130014148]
 script = ExtResource("1_meadow")
 
-[node name="Player" type="CharacterBody2D" parent="."]
+[node name="Player" type="CharacterBody2D" parent="." unique_id=814123121]
 position = Vector2(480, 270)
-collision_layer = 1
-collision_mask = 1
 script = ExtResource("2_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=28741690]
 shape = SubResource("RectangleShape2D_player")
 
-[node name="Camera2D" type="Camera2D" parent="Player"]
-position_smoothing_enabled = true
-position_smoothing_speed = 8.0
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=587498540]
 limit_left = 0
 limit_top = 0
 limit_right = 2400
 limit_bottom = 1350
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
 
-[node name="Enemies" type="Node2D" parent="."]
+[node name="Enemies" type="Node2D" parent="." unique_id=498864394]
 
-[node name="Enemy" type="CharacterBody2D" parent="Enemies"]
+[node name="Enemy" type="CharacterBody2D" parent="Enemies" unique_id=441228892]
 position = Vector2(600, 270)
-collision_layer = 1
-collision_mask = 1
 script = ExtResource("3_enemy")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemies/Enemy"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemies/Enemy" unique_id=1162915678]
 shape = SubResource("RectangleShape2D_enemy")
 
-[node name="Obstacles" type="Node2D" parent="."]
+[node name="Obstacles" type="Node2D" parent="." unique_id=1761182193]
 
-[node name="HUD" type="CanvasLayer" parent="."]
+[node name="HUD" type="CanvasLayer" parent="." unique_id=1299340118]
 script = ExtResource("4_hud")

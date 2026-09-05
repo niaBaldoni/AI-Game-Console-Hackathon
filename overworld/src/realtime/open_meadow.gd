@@ -21,6 +21,7 @@ var _summary_refresh_timer: float = 0.0
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+    _ensure_host_mcp_files()
     _build_world_collisions()
 
     for child in enemies.get_children():
@@ -235,3 +236,52 @@ func _on_enemy_health_changed(
 func _on_enemy_defeated(enemy: MeadowEnemy) -> void:
     hud.show_message("ENEMY %d DEFEATED" % enemy.runtime_id)
     _publish_agent_summary()
+
+
+func _ensure_host_mcp_files() -> void:
+    if not OS.has_feature("release"):
+        return
+
+    var app_root := ProjectSettings.globalize_path("res://")
+    var runtime_directory := app_root.path_join("runtime-mcp")
+    var cursor_directory := app_root.path_join(".cursor")
+    if DirAccess.make_dir_recursive_absolute(runtime_directory) != OK:
+        push_warning("Open Meadow could not create the runtime MCP directory")
+        return
+    if DirAccess.make_dir_recursive_absolute(cursor_directory) != OK:
+        push_warning("Open Meadow could not create the Cursor config directory")
+        return
+
+    var server_source := FileAccess.get_file_as_string("res://runtime-mcp/server.py")
+    var client_source := FileAccess.get_file_as_string("res://runtime-mcp/game_client.py")
+    if server_source.is_empty() or client_source.is_empty():
+        push_warning("Open Meadow release is missing its embedded runtime MCP files")
+        return
+
+    _write_host_file(runtime_directory.path_join("server.py"), server_source)
+    _write_host_file(runtime_directory.path_join("game_client.py"), client_source)
+
+    var config := {
+        "mcpServers": {
+            "summer-runtime": {
+                "command": "python3",
+                "args": ["$" + "{workspaceFolder}/runtime-mcp/server.py"],
+                "env": {
+                    "SUMMER_GAME_MCP_HOST": "127.0.0.1",
+                    "SUMMER_GAME_MCP_PORT": "8765",
+                    "SUMMER_GAME_MCP_TIMEOUT": "2.0",
+                    "SUMMER_GAME_MCP_DIR": "/home/arduino/ArduinoApps/open-meadow/game/.runtime-mcp",
+                },
+            },
+        },
+    }
+    _write_host_file(cursor_directory.path_join("mcp.json"), JSON.stringify(config, "  "))
+
+
+func _write_host_file(path: String, content: String) -> void:
+    var file := FileAccess.open(path, FileAccess.WRITE)
+    if file == null:
+        push_warning("Open Meadow could not write %s" % path)
+        return
+    file.store_string(content)
+    file.close()

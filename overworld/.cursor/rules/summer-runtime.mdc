@@ -1,0 +1,39 @@
+---
+description: Use the Summer runtime MCP bridge to observe and control Open Meadow
+alwaysApply: true
+---
+
+# Open Meadow runtime bridge
+
+When the game is running, use the `summer-runtime` MCP server for live gameplay
+state. This is a game-control interface, not a code-editing interface.
+
+## Safe workflow
+
+1. Call `get_game_state` before making a gameplay request.
+2. Use `spawn_enemy` with bounded meadow coordinates (`x` 24–2376, `y`
+   24–1326) and optional health 1–9.
+3. Call `get_game_state` again and confirm the new enemy appears in the
+   `summary.enemies` array.
+4. Explain the result in terms of the player-facing controls: joystick and
+   buttons A/B/C. Do not describe the hardware as keyboard keys.
+
+## Available tools
+
+- `get_game_state`: read the player and active enemy summary.
+- `set_agent_intent`: publish one bounded opponent intent: `idle`, `left`,
+  `right`, or `act`.
+- `spawn_enemy`: request one enemy at explicit meadow coordinates; health
+  defaults to 3. The game owns node creation and rejects a full roster.
+
+If a tool reports `game_unavailable`, start the Open Meadow game and retry once.
+Do not attempt arbitrary filesystem, shell, scene-tree, script, or network
+operations to work around it. Do not send a second spawn request until the
+follow-up state confirms whether the first one was accepted.
+
+On the Uno Q, `SUMMER_GAME_MCP_DIR` selects the shared App Lab mount at
+`/home/arduino/ArduinoApps/open-meadow/game/.runtime-mcp`; this is expected when
+the game is running in its container. Do not switch back to a host TCP port.
+
+The player's sword is button A. Desktop-only development may use the configured
+keyboard fallback, but never replace the handheld control names in game copy.

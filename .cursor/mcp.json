@@ -6,7 +6,8 @@
       "env": {
         "SUMMER_GAME_MCP_HOST": "127.0.0.1",
         "SUMMER_GAME_MCP_PORT": "8765",
-        "SUMMER_GAME_MCP_TIMEOUT": "1.0"
+        "SUMMER_GAME_MCP_TIMEOUT": "1.0",
+        "SUMMER_GAME_MCP_DIR": "/home/arduino/ArduinoApps/open-meadow/game/.runtime-mcp"
       }
     }
   }

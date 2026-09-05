@@ -1,8 +1,9 @@
 # Summer runtime MCP bridge
 
 This package lets Cursor CLI talk to a running Summer/Godot game on the same
-Uno Q. Cursor starts `server.py` as a stdio MCP server. The server connects to
-the game’s `AgentBridge.gd` over a loopback-only TCP socket.
+Uno Q. Cursor starts `server.py` as a stdio MCP server. Desktop sessions use a
+loopback-only TCP socket; Uno Q App Lab sessions use an atomic request/response
+file exchange through the game runner's shared app mount.
 
 The first milestone intentionally exposes only two tools:
 
@@ -50,6 +51,16 @@ AgentBridge.publish_summary({
 })
 ```
 
+## Uno Q transport
+
+The App Lab game runner is containerized, so its TCP loopback is private to the
+game container. For an on-board Cursor CLI session, keep
+`SUMMER_GAME_MCP_DIR` set to `/home/arduino/ArduinoApps/open-meadow/game/.runtime-mcp`
+as shown in the project config. The game writes its side at
+`/game/game/.runtime-mcp`, which is the same mounted directory. Requests and
+responses are renamed into place atomically; stale files are cleared when the
+game starts.
+
 ## Run the protocol smoke test
 
 The test starts a local mock game bridge, starts the stdio MCP server, lists
@@ -70,6 +81,8 @@ The server reads these optional environment variables:
 - `SUMMER_GAME_MCP_HOST` (default `127.0.0.1`; non-loopback hosts are rejected)
 - `SUMMER_GAME_MCP_PORT` (default `8765`)
 - `SUMMER_GAME_MCP_TIMEOUT` (default `1.0` seconds)
+- `SUMMER_GAME_MCP_DIR` (optional absolute shared app-mount directory; when set,
+  the server uses the file transport instead of TCP)
 
 Keep the project MCP configuration in git. Keep any future credentials outside
 the project config and pass them through the board’s persistent environment;
