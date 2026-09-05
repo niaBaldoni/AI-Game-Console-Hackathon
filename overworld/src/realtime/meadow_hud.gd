@@ -3,8 +3,11 @@ class_name MeadowHud
 
 var _ui_root: Control
 var _target_label: Label
+var _player_label: Label
 var _message_label: Label
 var _health_fill: ColorRect
+var _player_health_fill: ColorRect
+var _minimap: MeadowMinimap
 var _message_time_remaining: float = 0.0
 
 
@@ -22,13 +25,39 @@ func _process(delta: float) -> void:
         _message_label.text = ""
 
 
-func set_enemy_health(current_health: int, maximum_health: int) -> void:
+func bind_player(player: MeadowPlayer, world_size: Vector2) -> void:
+    if _minimap == null:
+        return
+    _minimap.player = player
+    _minimap.world_size = world_size
+
+
+func set_player_health(current_health: int, maximum_health: int) -> void:
+    if _player_label == null:
+        return
+    _player_label.text = "YOU  %d / %d" % [current_health, maximum_health]
+    var health_ratio := clampf(float(current_health) / float(maxi(maximum_health, 1)), 0.0, 1.0)
+    _player_health_fill.size.x = 180.0 * health_ratio
+
+
+func set_tracked_enemy(enemy: MeadowEnemy) -> void:
+    if enemy == null or not enemy.is_alive():
+        set_tracked_enemy_stats("NO TARGET", 0, 1)
+        return
+    set_tracked_enemy_stats(enemy.get_difficulty_name(), enemy.health, enemy.max_health)
+
+
+func set_tracked_enemy_stats(label_text: String, current_health: int, maximum_health: int) -> void:
     if _target_label == null:
         return
 
-    _target_label.text = "TARGET  %d / %d" % [current_health, maximum_health]
+    _target_label.text = "%s  %d / %d" % [label_text, current_health, maximum_health]
     var health_ratio := clampf(float(current_health) / float(maxi(maximum_health, 1)), 0.0, 1.0)
     _health_fill.size.x = 180.0 * health_ratio
+
+
+func set_enemy_health(current_health: int, maximum_health: int) -> void:
+    set_tracked_enemy_stats("TARGET", current_health, maximum_health)
 
 
 func set_enemy_count(current_count: int, maximum_count: int) -> void:
@@ -54,7 +83,7 @@ func _build_ui() -> void:
 
     var panel := ColorRect.new()
     panel.position = Vector2(16.0, 16.0)
-    panel.size = Vector2(270.0, 104.0)
+    panel.size = Vector2(270.0, 148.0)
     panel.color = Color(0.08, 0.12, 0.16, 0.88)
     panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _ui_root.add_child(panel)
@@ -65,11 +94,28 @@ func _build_ui() -> void:
     var controls := _make_label("JOYSTICK MOVE   A SWING", Vector2(16.0, 38.0), 14)
     controls.add_theme_color_override("font_color", Color("#d8e7ff"))
 
-    _target_label = _make_label("TARGET  3 / 3", Vector2(16.0, 64.0), 14)
+    _player_label = _make_label("YOU  6 / 6", Vector2(16.0, 60.0), 14)
+    _player_label.add_theme_color_override("font_color", Color("#9ecbff"))
+
+    var player_health_back := ColorRect.new()
+    player_health_back.position = Vector2(16.0, 84.0)
+    player_health_back.size = Vector2(180.0, 6.0)
+    player_health_back.color = Color("#263238")
+    player_health_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    panel.add_child(player_health_back)
+
+    _player_health_fill = ColorRect.new()
+    _player_health_fill.position = player_health_back.position
+    _player_health_fill.size = Vector2(180.0, 6.0)
+    _player_health_fill.color = Color("#4c6fff")
+    _player_health_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    panel.add_child(_player_health_fill)
+
+    _target_label = _make_label("MELEE  6 / 6", Vector2(16.0, 98.0), 14)
     _target_label.add_theme_color_override("font_color", Color("#fff1c7"))
 
     var health_back := ColorRect.new()
-    health_back.position = Vector2(16.0, 88.0)
+    health_back.position = Vector2(16.0, 122.0)
     health_back.size = Vector2(180.0, 6.0)
     health_back.color = Color("#263238")
     health_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -82,8 +128,25 @@ func _build_ui() -> void:
     _health_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
     panel.add_child(_health_fill)
 
-    _message_label = _make_label("", Vector2(16.0, 132.0), 16)
+    _message_label = _make_label("", Vector2(16.0, 160.0), 16)
     _message_label.add_theme_color_override("font_color", Color("#fff1c7"))
+
+    _minimap = MeadowMinimap.new()
+    _minimap.name = "Radar"
+    _minimap.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+    _minimap.anchor_top = 1.0
+    _minimap.anchor_bottom = 1.0
+    _minimap.anchor_left = 0.0
+    _minimap.anchor_right = 0.0
+    _minimap.offset_left = 16.0
+    _minimap.offset_right = 176.0
+    _minimap.offset_top = -176.0
+    _minimap.offset_bottom = -16.0
+    _minimap.custom_minimum_size = Vector2(160.0, 160.0)
+    _ui_root.add_child(_minimap)
+
+    var legend := _make_label("RED MELEE   PURPLE MAGE", Vector2(188.0, 502.0), 12)
+    legend.add_theme_color_override("font_color", Color("#d8e7ff"))
 
 
 func _make_label(value: String, label_position: Vector2, font_size: int) -> Label:

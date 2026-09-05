@@ -114,6 +114,28 @@ The implementation is complete only after all of these checks pass:
 
 ## Deferred work
 
-Agent-controlled enemy decisions, MCP state publication, enemy pursuit/attack,
-multiple enemies, inventory, map transitions, and deletion of the legacy
-turn-based files are intentionally deferred until this small loop is stable.
+Agent-controlled enemy decisions, MCP state publication, inventory, map
+transitions, and deletion of the legacy turn-based files are intentionally
+deferred until this small loop is stable.
+
+## Update: enemy combat (5 Sep 2026)
+
+We kept the meadow, player slash, HUD, and board constraints above. Enemies are
+no longer idle dummy targets.
+
+**What changed**
+
+- Enemies face the player when they are in range, then attack.
+- Two kinds, still using the existing placeholder shapes:
+  - **Melee** — smaller detect range, slow walk, player-like slash, larger HP
+    (6).
+  - **Mage** — larger detect range, keeps distance, shoots fireballs, smaller HP
+    (3).
+- Several of both kinds spawn across the meadow (`PACK` in
+  `src/realtime/open_meadow.gd`).
+- The player now has HP (6) and i-frames; 0 HP is a fall. Fireballs live in
+  `src/realtime/meadow_fireball.gd`.
+- Radar colors: red melee, purple mage.
+
+Tunables (speed, ranges, fire rate) are first-pass and meant to be iterated.
+Original idle-enemy behavior in the sections above is historical.

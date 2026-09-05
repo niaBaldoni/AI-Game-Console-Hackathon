@@ -9,6 +9,15 @@ const OBSTACLES := [
     {"position": Vector2(1210.0, 780.0), "size": Vector2(210.0, 42.0)},
     {"position": Vector2(1790.0, 440.0), "size": Vector2(150.0, 42.0)},
 ]
+const PACK := [
+    {"position": Vector2(720.0, 270.0), "kind": MeadowEnemy.Kind.MELEE},
+    {"position": Vector2(980.0, 430.0), "kind": MeadowEnemy.Kind.RANGED},
+    {"position": Vector2(390.0, 920.0), "kind": MeadowEnemy.Kind.MELEE},
+    {"position": Vector2(1480.0, 640.0), "kind": MeadowEnemy.Kind.RANGED},
+    {"position": Vector2(760.0, 1120.0), "kind": MeadowEnemy.Kind.RANGED},
+    {"position": Vector2(1980.0, 300.0), "kind": MeadowEnemy.Kind.MELEE},
+    {"position": Vector2(2080.0, 1120.0), "kind": MeadowEnemy.Kind.RANGED},
+]
 
 @onready var player: MeadowPlayer = $Player
 @onready var enemies: Node2D = $Enemies
@@ -23,6 +32,7 @@ func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
     _ensure_host_mcp_files()
     _build_world_collisions()
+    _spawn_pack()
 
     for child in enemies.get_children():
         var enemy := child as MeadowEnemy
@@ -31,6 +41,11 @@ func _ready() -> void:
 
     player.attack_started.connect(_on_player_attack_started)
     player.attack_hit.connect(_on_player_attack_hit)
+    player.damaged.connect(_on_player_damaged)
+    player.defeated.connect(_on_player_defeated)
+    player.health_changed.connect(_on_player_health_changed)
+    hud.bind_player(player, WORLD_SIZE)
+    hud.set_player_health(player.health, player.max_health)
     AgentBridge.enemy_spawn_requested.connect(_on_enemy_spawn_requested)
 
     _publish_agent_summary()
@@ -42,6 +57,7 @@ func _process(delta: float) -> void:
     if _summary_refresh_timer <= 0.0:
         _summary_refresh_timer = 0.1
         _publish_agent_summary()
+    hud.set_tracked_enemy(player.get_focus_enemy())
 
 
 func _draw() -> void:
@@ -133,12 +149,48 @@ func _add_boundary(center: Vector2, size: Vector2, node_name: String) -> void:
     obstacles.add_child(body)
 
 
+func _spawn_pack() -> void:
+    if PACK.is_empty():
+        return
+
+    var first_spec: Dictionary = PACK[0]
+    var first_enemy := enemies.get_node_or_null("Enemy") as MeadowEnemy
+    if first_enemy == null:
+        first_enemy = MeadowEnemy.new()
+        first_enemy.name = "Enemy"
+        enemies.add_child(first_enemy)
+    first_enemy.position = first_spec["position"]
+    first_enemy.apply_kind(first_spec["kind"])
+    _wire_enemy(first_enemy)
+
+    for index in range(1, PACK.size()):
+        var spec: Dictionary = PACK[index]
+        var spawned := first_enemy.duplicate() as MeadowEnemy
+        if spawned == null:
+            continue
+        spawned.name = "Enemy%d" % index
+        spawned.runtime_id = 0
+        spawned.position = spec["position"]
+        enemies.add_child(spawned)
+        spawned.apply_kind(spec["kind"])
+        _wire_enemy(spawned)
+
+
+func _wire_enemy(enemy: MeadowEnemy) -> void:
+    enemy.set_player(player)
+    if not enemy.attack_hit.is_connected(_on_enemy_attack_hit):
+        enemy.attack_hit.connect(_on_enemy_attack_hit)
+
+
 func _register_enemy(enemy: MeadowEnemy) -> void:
     if enemy.runtime_id <= 0:
         enemy.runtime_id = _next_enemy_runtime_id
         _next_enemy_runtime_id += 1
-    enemy.health_changed.connect(_on_enemy_health_changed.bind(enemy))
-    enemy.defeated.connect(_on_enemy_defeated.bind(enemy))
+    _wire_enemy(enemy)
+    if not enemy.health_changed.is_connected(_on_enemy_health_changed.bind(enemy)):
+        enemy.health_changed.connect(_on_enemy_health_changed.bind(enemy))
+    if not enemy.defeated.is_connected(_on_enemy_defeated.bind(enemy)):
+        enemy.defeated.connect(_on_enemy_defeated.bind(enemy))
 
 
 func _on_enemy_spawn_requested(
@@ -176,10 +228,12 @@ func _on_enemy_spawn_requested(
     enemy.name = "Enemy_%03d" % request_id
     enemy.runtime_id = _next_enemy_runtime_id
     _next_enemy_runtime_id += 1
-    enemy.max_health = health
     enemy.position = spawn_position
     enemies.add_child(enemy)
     _register_enemy(enemy)
+    enemy.max_health = maxi(health, 1)
+    enemy.health = enemy.max_health
+    enemy.health_changed.emit(enemy.health, enemy.max_health)
 
     AgentBridge.resolve_spawn_request(request_id, {
         "accepted": true,
@@ -187,7 +241,7 @@ func _on_enemy_spawn_requested(
         "request_id": request_id,
         "enemy_id": enemy.runtime_id,
         "position": spawn_position,
-        "health": health,
+        "health": enemy.health,
     })
     hud.show_message("ENEMY SPAWNED")
     _publish_agent_summary()
@@ -222,6 +276,22 @@ func _on_player_attack_started() -> void:
 
 func _on_player_attack_hit(target: MeadowEnemy, _damage: int) -> void:
     hud.show_message("HIT ENEMY %d" % target.runtime_id)
+
+
+func _on_enemy_attack_hit(_target: MeadowPlayer, _damage: int) -> void:
+    hud.show_message("YOU WERE HIT")
+
+
+func _on_player_damaged(_amount: int) -> void:
+    hud.show_message("YOU WERE HIT")
+
+
+func _on_player_health_changed(current_health: int, maximum_health: int) -> void:
+    hud.set_player_health(current_health, maximum_health)
+
+
+func _on_player_defeated() -> void:
+    hud.show_message("YOU FELL")
 
 
 func _on_enemy_health_changed(
