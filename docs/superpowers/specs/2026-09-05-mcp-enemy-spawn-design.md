@@ -119,3 +119,11 @@ removed after their feedback window, freeing slots for later spawn requests.
 Agent decision-making, enemy pursuit/attacks, spawn waves, persistent enemy
 ids across scene changes, remote network transport, and deletion of the legacy
 turn-based source remain deferred.
+
+## Update: spawn kinds (5 Sep 2026)
+
+`spawn_enemy` now accepts an optional `kind` of `brute`/`melee` or `mage`/`ranged`.
+The game still owns bounds, roster limit, and node creation. If `health` is
+omitted, the kind's default HP is used (brute 3, mage 2). Those defaults are
+fodder stats, not bosses.
+

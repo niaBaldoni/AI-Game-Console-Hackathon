@@ -57,6 +57,7 @@ class MockBridgeHandler(socketserver.StreamRequestHandler):
                 "health": params.get("health", 3),
                 "max_health": params.get("health", 3),
                 "alive": True,
+                "kind": params.get("kind", "brute"),
             }
             state.next_enemy_id += 1
             state.enemies.append(enemy)
@@ -68,6 +69,7 @@ class MockBridgeHandler(socketserver.StreamRequestHandler):
                     "request_id": enemy["id"],
                     "position": enemy["position"],
                     "health": enemy["health"],
+                    "kind": enemy["kind"],
                 },
             }
         else:
@@ -108,6 +110,8 @@ class RuntimeMcpTests(unittest.TestCase):
         spawned = client.request("spawn_enemy", {"x": 720.0, "y": 360.0, "health": 4})
         self.assertTrue(spawned["queued"])
         self.assertEqual(spawned["health"], 4)
+        mage = client.request("spawn_enemy", {"x": 800.0, "y": 400.0, "kind": "mage"})
+        self.assertEqual(mage["kind"], "mage")
         self.assertEqual(client.request("get_game_state", {})["enemies"][0]["id"], 1)
 
     def test_file_bridge_client_round_trip(self) -> None:

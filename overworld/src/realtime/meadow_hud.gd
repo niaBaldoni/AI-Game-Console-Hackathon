@@ -111,7 +111,7 @@ func _build_ui() -> void:
     _player_health_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
     panel.add_child(_player_health_fill)
 
-    _target_label = _make_label("MELEE  6 / 6", Vector2(16.0, 98.0), 14)
+    _target_label = _make_label("BRUTE  3 / 3", Vector2(16.0, 98.0), 14)
     _target_label.add_theme_color_override("font_color", Color("#fff1c7"))
 
     var health_back := ColorRect.new()
@@ -145,7 +145,7 @@ func _build_ui() -> void:
     _minimap.custom_minimum_size = Vector2(160.0, 160.0)
     _ui_root.add_child(_minimap)
 
-    var legend := _make_label("RED MELEE   PURPLE MAGE", Vector2(188.0, 502.0), 12)
+    var legend := _make_label("RED BRUTE   PURPLE MAGE", Vector2(188.0, 502.0), 12)
     legend.add_theme_color_override("font_color", Color("#d8e7ff"))
 
 

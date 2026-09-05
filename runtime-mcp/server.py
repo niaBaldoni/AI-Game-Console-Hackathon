@@ -70,7 +70,8 @@ TOOLS = [
         "name": "spawn_enemy",
         "description": (
             "Queue one real-time enemy spawn in the running Open Meadow. "
-            "The game owns the enemy node and enforces its live roster limit."
+            "Pass kind brute (melee) or mage (ranged). The game owns the enemy node "
+            "and enforces its live roster limit."
         ),
         "inputSchema": {
             "type": "object",
@@ -87,12 +88,16 @@ TOOLS = [
                     "maximum": MEADOW_Y_MAX,
                     "description": "Enemy Y coordinate inside the meadow.",
                 },
+                "kind": {
+                    "type": "string",
+                    "enum": ["brute", "melee", "mage", "ranged"],
+                    "description": "Enemy kind to spawn. brute/melee or mage/ranged. Defaults to brute.",
+                },
                 "health": {
                     "type": "integer",
                     "minimum": MIN_ENEMY_HEALTH,
                     "maximum": MAX_ENEMY_HEALTH,
-                    "default": 3,
-                    "description": "Optional enemy health; defaults to 3.",
+                    "description": "Optional health override; omitted uses the kind default.",
                 },
             },
             "required": ["x", "y"],
@@ -218,30 +223,40 @@ class RuntimeMcpServer:
             bridge_method = "set_agent_intent"
             bridge_params = {"intent": arguments["intent"]}
         elif name == "spawn_enemy":
-            invalid_keys = set(arguments) - {"x", "y", "health"}
+            invalid_keys = set(arguments) - {"x", "y", "health", "kind"}
             if invalid_keys or "x" not in arguments or "y" not in arguments:
                 return _error_response(
                     request_id,
                     -32602,
-                    "spawn_enemy requires only x, y, and optional health",
+                    "spawn_enemy requires x, y, and optional kind and health",
                 )
 
             x = arguments["x"]
             y = arguments["y"]
-            health = arguments.get("health", 3)
             if not self._valid_number(x) or not self._valid_number(y):
                 return _error_response(request_id, -32602, "spawn_enemy x and y must be finite numbers")
             if not MEADOW_X_MIN <= float(x) <= MEADOW_X_MAX:
                 return _error_response(request_id, -32602, "spawn_enemy x is outside the meadow")
             if not MEADOW_Y_MIN <= float(y) <= MEADOW_Y_MAX:
                 return _error_response(request_id, -32602, "spawn_enemy y is outside the meadow")
-            if isinstance(health, bool) or not isinstance(health, int):
-                return _error_response(request_id, -32602, "spawn_enemy health must be an integer")
-            if not MIN_ENEMY_HEALTH <= health <= MAX_ENEMY_HEALTH:
-                return _error_response(request_id, -32602, "spawn_enemy health is outside the allowed range")
+
+            kind = arguments.get("kind", "brute")
+            if not isinstance(kind, str):
+                return _error_response(request_id, -32602, "spawn_enemy kind must be a string")
+            normalized_kind = self._normalize_kind(kind)
+            if not normalized_kind:
+                return _error_response(request_id, -32602, "spawn_enemy kind must be brute, melee, mage, or ranged")
+
+            bridge_params = {"x": float(x), "y": float(y), "kind": normalized_kind}
+            if "health" in arguments:
+                health = arguments["health"]
+                if isinstance(health, bool) or not isinstance(health, int):
+                    return _error_response(request_id, -32602, "spawn_enemy health must be an integer")
+                if not MIN_ENEMY_HEALTH <= health <= MAX_ENEMY_HEALTH:
+                    return _error_response(request_id, -32602, "spawn_enemy health is outside the allowed range")
+                bridge_params["health"] = health
 
             bridge_method = "spawn_enemy"
-            bridge_params = {"x": float(x), "y": float(y), "health": health}
         else:
             return _error_response(request_id, -32601, f"Unknown tool: {name}")
 
@@ -260,6 +275,15 @@ class RuntimeMcpServer:
             "id": request_id,
             "result": _text_result(payload),
         }
+
+    @staticmethod
+    def _normalize_kind(value: str) -> str:
+        key = value.strip().lower()
+        if key in {"melee", "brute"}:
+            return "brute"
+        if key in {"mage", "ranged"}:
+            return "mage"
+        return ""
 
     @staticmethod
     def _valid_number(value: Any) -> bool:

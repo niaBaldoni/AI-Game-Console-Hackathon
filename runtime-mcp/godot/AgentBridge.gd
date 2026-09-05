@@ -6,7 +6,7 @@ class_name RuntimeAgentBridge
 ## Add this script as an Autoload named "AgentBridge" in the game project.
 
 signal agent_intent_changed(intent: String)
-signal enemy_spawn_requested(request_id: int, position: Vector2, health: int)
+signal enemy_spawn_requested(request_id: int, position: Vector2, health: int, kind_name: String, override_health: bool)
 
 @export var listen_host: String = "127.0.0.1"
 @export var listen_port: int = 8765
@@ -182,10 +182,10 @@ func set_agent_intent(intent: String) -> Dictionary:
 
 
 func request_enemy_spawn(params: Dictionary) -> Dictionary:
-	if params.size() < 2 or params.size() > 3 or not params.has("x") or not params.has("y"):
+	if params.size() < 2 or params.size() > 4 or not params.has("x") or not params.has("y"):
 		return {}
 	for key in params.keys():
-		if key not in ["x", "y", "health"]:
+		if key not in ["x", "y", "health", "kind"]:
 			return {}
 
 	var x_value = params["x"]
@@ -199,26 +199,45 @@ func request_enemy_spawn(params: Dictionary) -> Dictionary:
 	if position.y < MEADOW_Y_MIN or position.y > MEADOW_Y_MAX:
 		return {}
 
+	var kind_name := "brute"
+	if params.has("kind"):
+		kind_name = _normalize_kind_name(params["kind"])
+		if kind_name.is_empty():
+			return {}
+
+	var override_health := params.has("health")
 	var health := DEFAULT_ENEMY_HEALTH
-	if params.has("health"):
+	if override_health:
 		if not _is_integer_number(params["health"]):
 			return {}
 		health = int(params["health"])
-	if health < MIN_ENEMY_HEALTH or health > MAX_ENEMY_HEALTH:
-		return {}
+		if health < MIN_ENEMY_HEALTH or health > MAX_ENEMY_HEALTH:
+			return {}
 
 	var request_id := _next_spawn_request_id
 	_next_spawn_request_id += 1
-	enemy_spawn_requested.emit(request_id, position, health)
+	enemy_spawn_requested.emit(request_id, position, health, kind_name, override_health)
 	var default_result := {
 		"queued": true,
 		"request_id": request_id,
 		"position": position,
 		"health": health,
+		"kind": kind_name,
 	}
 	var resolved_result: Dictionary = _spawn_resolutions.get(request_id, default_result)
 	_spawn_resolutions.erase(request_id)
 	return resolved_result
+
+
+func _normalize_kind_name(value: Variant) -> String:
+	if not (value is String):
+		return ""
+	var key := String(value).strip_edges().to_lower()
+	if key == "melee" or key == "brute":
+		return "brute"
+	if key == "mage" or key == "ranged":
+		return "mage"
+	return ""
 
 
 func resolve_spawn_request(request_id: int, result: Dictionary) -> void:
@@ -264,7 +283,7 @@ func _handle_request(line: String) -> Dictionary:
 		"spawn_enemy":
 			var spawn_state := request_enemy_spawn(params)
 			if spawn_state.is_empty():
-				return {"ok": false, "error": {"code": "invalid_spawn", "message": "Spawn position or health is not allowed"}}
+				return {"ok": false, "error": {"code": "invalid_spawn", "message": "Spawn position, kind, or health is not allowed"}}
 			if spawn_state.get("accepted", true) == false:
 				return {
 					"ok": false,

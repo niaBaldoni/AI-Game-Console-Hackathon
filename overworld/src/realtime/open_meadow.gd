@@ -196,7 +196,9 @@ func _register_enemy(enemy: MeadowEnemy) -> void:
 func _on_enemy_spawn_requested(
     request_id: int,
     spawn_position: Vector2,
-    health: int
+    health: int,
+    kind_name: String,
+    override_health: bool
 ) -> void:
     if _alive_enemy_count() >= MAX_ACTIVE_ENEMIES:
         AgentBridge.resolve_spawn_request(request_id, {
@@ -229,11 +231,15 @@ func _on_enemy_spawn_requested(
     enemy.runtime_id = _next_enemy_runtime_id
     _next_enemy_runtime_id += 1
     enemy.position = spawn_position
+    var kind := MeadowEnemy.Kind.RANGED if kind_name == "mage" else MeadowEnemy.Kind.MELEE
+    enemy.kind = kind
     enemies.add_child(enemy)
+    enemy.apply_kind(kind)
+    if override_health:
+        enemy.max_health = maxi(health, 1)
+        enemy.health = enemy.max_health
+        enemy.health_changed.emit(enemy.health, enemy.max_health)
     _register_enemy(enemy)
-    enemy.max_health = maxi(health, 1)
-    enemy.health = enemy.max_health
-    enemy.health_changed.emit(enemy.health, enemy.max_health)
 
     AgentBridge.resolve_spawn_request(request_id, {
         "accepted": true,
@@ -242,8 +248,9 @@ func _on_enemy_spawn_requested(
         "enemy_id": enemy.runtime_id,
         "position": spawn_position,
         "health": enemy.health,
+        "kind": enemy.get_kind_name().to_lower(),
     })
-    hud.show_message("ENEMY SPAWNED")
+    hud.show_message("%s SPAWNED" % enemy.get_kind_name())
     _publish_agent_summary()
 
 

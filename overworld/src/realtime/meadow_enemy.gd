@@ -10,7 +10,7 @@ signal attack_hit(target: MeadowPlayer, damage: int)
 enum Kind { MELEE, RANGED }
 
 const KIND_NAMES := {
-    Kind.MELEE: "MELEE",
+    Kind.MELEE: "BRUTE",
     Kind.RANGED: "MAGE",
 }
 
@@ -31,6 +31,11 @@ const FIREBALL_SCENE := preload("res://src/realtime/meadow_fireball.gd")
 @export var body_radius: float = 18.0
 @export var keep_distance: float = 210.0
 @export var fireball_speed: float = 240.0
+@export var charge_chance: float = 0.38
+@export var charge_duration: float = 0.9
+@export var charged_fireball_damage: int = 2
+@export var charged_fireball_speed: float = 210.0
+@export var charged_fireball_radius: float = 16.0
 
 var health: int = 0
 var runtime_id: int = 0
@@ -47,6 +52,8 @@ var _attack_active: bool = false
 var _attack_elapsed: float = 0.0
 var _attack_cooldown_remaining: float = 0.0
 var _has_hit: bool = false
+var _charging: bool = false
+var _charge_elapsed: float = 0.0
 
 
 func _ready() -> void:
@@ -64,9 +71,9 @@ func apply_kind(enemy_kind: Kind) -> void:
     kind = enemy_kind
     match kind:
         Kind.MELEE:
-            max_health = 6
+            max_health = 3
             body_radius = 22.0
-            move_speed = 78.0
+            move_speed = 46.0
             detect_range = 170.0
             attack_range = 48.0
             attack_reach = 50.0
@@ -76,9 +83,9 @@ func apply_kind(enemy_kind: Kind) -> void:
             knockback_speed = 100.0
             _body_color = Color("#d95763")
         Kind.RANGED:
-            max_health = 3
+            max_health = 2
             body_radius = 15.0
-            move_speed = 96.0
+            move_speed = 118.0
             detect_range = 340.0
             attack_range = 280.0
             keep_distance = 200.0
@@ -86,6 +93,11 @@ func apply_kind(enemy_kind: Kind) -> void:
             attack_cooldown = 1.35
             attack_damage = 1
             fireball_speed = 240.0
+            charge_chance = 0.38
+            charge_duration = 0.9
+            charged_fireball_damage = 2
+            charged_fireball_speed = 210.0
+            charged_fireball_radius = 16.0
             knockback_speed = 150.0
             _body_color = Color("#7a4ad1")
 
@@ -96,6 +108,8 @@ func apply_kind(enemy_kind: Kind) -> void:
     _attack_elapsed = 0.0
     _attack_cooldown_remaining = 0.0
     _has_hit = false
+    _charging = false
+    _charge_elapsed = 0.0
     _sync_collision()
     health_changed.emit(health, max_health)
     queue_redraw()
@@ -131,10 +145,17 @@ func _physics_process(delta: float) -> void:
     _hurt_timer = maxf(_hurt_timer - delta, 0.0)
 
     if _knockback_timer > 0.0:
+        _cancel_charge()
         velocity = _knockback_velocity
         move_and_slide()
         _knockback_velocity = _knockback_velocity.move_toward(Vector2.ZERO, 950.0 * delta)
         _knockback_timer -= delta
+        queue_redraw()
+        return
+
+    if _charging:
+        _update_charge(delta)
+        move_and_slide()
         queue_redraw()
         return
 
@@ -186,7 +207,11 @@ func _update_combat() -> void:
 
 
 func _begin_attack() -> void:
-    if _attack_active or _attack_cooldown_remaining > 0.0:
+    if _charging or _attack_active or _attack_cooldown_remaining > 0.0:
+        return
+
+    if kind == Kind.RANGED and randf() < charge_chance:
+        _start_charge()
         return
 
     _attack_active = true
@@ -198,7 +223,32 @@ func _begin_attack() -> void:
     if kind == Kind.MELEE:
         _try_melee_hit()
     else:
-        _spawn_fireball()
+        _spawn_fireball(false)
+
+
+func _start_charge() -> void:
+    _charging = true
+    _charge_elapsed = 0.0
+    _attack_cooldown_remaining = attack_cooldown
+    velocity = Vector2.ZERO
+    attack_started.emit()
+
+
+func _update_charge(delta: float) -> void:
+    velocity = Vector2.ZERO
+    if _player != null and is_instance_valid(_player) and _player.is_alive():
+        var offset := _player.global_position - global_position
+        if offset != Vector2.ZERO:
+            facing = offset.normalized()
+    _charge_elapsed += delta
+    if _charge_elapsed >= charge_duration:
+        _charging = false
+        _spawn_fireball(true)
+
+
+func _cancel_charge() -> void:
+    _charging = false
+    _charge_elapsed = 0.0
 
 
 func _try_melee_hit() -> void:
@@ -219,12 +269,23 @@ func _try_melee_hit() -> void:
         attack_hit.emit(_player, attack_damage)
 
 
-func _spawn_fireball() -> void:
+func _spawn_fireball(charged: bool = false) -> void:
+    var parent := get_parent()
+    if parent == null:
+        return
     var fireball: MeadowFireball = FIREBALL_SCENE.new()
     var origin := global_position + facing * (body_radius + 12.0)
-    get_parent().add_child(fireball)
-    fireball.setup(origin, facing, attack_damage)
-    fireball.travel_speed = fireball_speed
+    if charged:
+        fireball.setup(
+            origin,
+            facing,
+            charged_fireball_damage,
+            charged_fireball_speed,
+            charged_fireball_radius
+        )
+    else:
+        fireball.setup(origin, facing, attack_damage, fireball_speed, 7.0)
+    parent.add_child(fireball)
 
 
 func is_alive() -> bool:
@@ -239,6 +300,8 @@ func take_damage(amount: int, direction: Vector2) -> bool:
     health = maxi(health - applied_damage, 0)
     _hurt_timer = 0.14
     _is_aggro = true
+    _cancel_charge()
+    _attack_active = false
 
     var knockback_direction := direction.normalized()
     if knockback_direction == Vector2.ZERO:
@@ -269,6 +332,7 @@ func get_state() -> Dictionary:
         "kind": kind,
         "kind_name": get_kind_name(),
         "aggro": _is_aggro,
+        "charging": _charging,
     }
 
 
@@ -313,6 +377,11 @@ func _draw() -> void:
         if kind == Kind.RANGED:
             draw_rect(Rect2(-body_radius * 0.35, -body_radius * 0.95, body_radius * 0.7, body_radius * 0.35), Color("#5b2ea6"))
             draw_circle(Vector2(0.0, -body_radius * 1.05), 4.0, Color("#ff7a2e"))
+            if _charging:
+                var charge_ratio := clampf(_charge_elapsed / maxf(charge_duration, 0.01), 0.0, 1.0)
+                var charge_radius := 6.0 + charged_fireball_radius * charge_ratio
+                draw_circle(facing * (body_radius + 10.0), charge_radius, Color(1.0, 0.55, 0.2, 0.35 + 0.45 * charge_ratio))
+                draw_circle(facing * (body_radius + 10.0), charge_radius * 0.45, Color("#fff1c7"))
         else:
             draw_rect(Rect2(-body_radius * 0.45, body_radius * 0.18, body_radius * 0.9, body_radius * 0.22), Color("#8f3548"))
 

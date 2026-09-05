@@ -139,3 +139,11 @@ no longer idle dummy targets.
 
 Tunables (speed, ranges, fire rate) are first-pass and meant to be iterated.
 Original idle-enemy behavior in the sections above is historical.
+
+## Update: brute/mage rebalance and charged fireball (5 Sep 2026)
+
+Neither kind is a boss. Brute HP is 3 and walk speed is 46 (player is 190).
+Mage HP is 2 and walk speed is 118, always slower than the player. Mages
+sometimes stop and charge a larger fireball (~0.9s, 2 damage); a hit interrupts
+the charge. MCP `spawn_enemy` can request `kind` brute or mage.
+
