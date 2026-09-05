@@ -31,11 +31,15 @@ const FIREBALL_SCENE := preload("res://src/realtime/meadow_fireball.gd")
 @export var body_radius: float = 18.0
 @export var keep_distance: float = 210.0
 @export var fireball_speed: float = 170.0
+@export var despawn_delay: float = 1.5
 @export var charge_chance: float = 0.38
 @export var charge_duration: float = 0.9
 @export var charged_fireball_damage: int = 2
 @export var charged_fireball_speed: float = 145.0
 @export var charged_fireball_radius: float = 16.0
+@export var fireball_visual_radius: float = 8.0
+@export var fireball_hit_radius: float = 3.5
+@export var charged_fireball_hit_radius: float = 6.5
 
 var health: int = 0
 var runtime_id: int = 0
@@ -46,6 +50,7 @@ var _knockback_velocity: Vector2 = Vector2.ZERO
 var _knockback_timer: float = 0.0
 var _hurt_timer: float = 0.0
 var _is_defeated: bool = false
+var _despawn_timer: float = 0.0
 var _is_aggro: bool = false
 var _body_color: Color = Color("#d95763")
 var _attack_active: bool = false
@@ -98,6 +103,9 @@ func apply_kind(enemy_kind: Kind) -> void:
             charged_fireball_damage = 2
             charged_fireball_speed = 145.0
             charged_fireball_radius = 16.0
+            fireball_visual_radius = 8.0
+            fireball_hit_radius = 3.5
+            charged_fireball_hit_radius = 6.5
             knockback_speed = 150.0
             _body_color = Color("#7a4ad1")
 
@@ -139,6 +147,9 @@ func _sync_collision() -> void:
 func _physics_process(delta: float) -> void:
     if _is_defeated:
         velocity = Vector2.ZERO
+        _despawn_timer += delta
+        if _despawn_timer >= despawn_delay:
+            queue_free()
         return
 
     _attack_cooldown_remaining = maxf(_attack_cooldown_remaining - delta, 0.0)
@@ -281,10 +292,18 @@ func _spawn_fireball(charged: bool = false) -> void:
             facing,
             charged_fireball_damage,
             charged_fireball_speed,
-            charged_fireball_radius
+            charged_fireball_radius,
+            charged_fireball_hit_radius
         )
     else:
-        fireball.setup(origin, facing, attack_damage, fireball_speed, 7.0)
+        fireball.setup(
+            origin,
+            facing,
+            attack_damage,
+            fireball_speed,
+            fireball_visual_radius,
+            fireball_hit_radius
+        )
     parent.add_child(fireball)
 
 

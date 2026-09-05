@@ -15,11 +15,11 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="Open Meadow"
+run/main_scene="res://src/realtime/open_meadow.tscn"
 config/version="0.1.0"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 run/max_fps=60
 config/icon="res://icon.svg"
-run/main_scene="res://src/realtime/open_meadow.tscn"
 
 [autoload]
 

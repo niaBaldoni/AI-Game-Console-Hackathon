@@ -186,3 +186,8 @@ We kept the meadow combat, radar, pause flow, and board constraints above.
 Original deferred-work lines about inventory remain historical; hearts and
 boosters are now in the meadow, not a full inventory system.
 
+## Update: smaller fireball hitboxes (5 Sep 2026)
+
+Fireball **sprites stay large** (normal visual radius 8, charged 16). Collision
+is smaller so shots are easier to dodge: normal hit radius 3.5, charged 6.5.
+Drawn size and hurtbox are independent.

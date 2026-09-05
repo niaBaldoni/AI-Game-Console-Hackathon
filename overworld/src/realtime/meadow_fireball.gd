@@ -8,7 +8,8 @@ class_name MeadowFireball
 var _direction: Vector2 = Vector2.RIGHT
 var _time_alive: float = 0.0
 var _spent: bool = false
-var _radius: float = 7.0
+var _visual_radius: float = 8.0
+var _hit_radius: float = 3.5
 
 
 func setup(
@@ -16,7 +17,8 @@ func setup(
 	direction: Vector2,
 	projectile_damage: int,
 	speed: float = 240.0,
-	radius: float = 7.0
+	visual_radius: float = 8.0,
+	hit_radius: float = 3.5
 ) -> void:
 	global_position = origin
 	_direction = direction.normalized()
@@ -24,8 +26,9 @@ func setup(
 		_direction = Vector2.RIGHT
 	damage = maxi(projectile_damage, 1)
 	travel_speed = speed
-	_radius = radius
-	lifetime = 1.8 if radius <= 8.0 else 2.3
+	_visual_radius = visual_radius
+	_hit_radius = hit_radius
+	lifetime = 1.8 if visual_radius <= 10.0 else 2.3
 	rotation = _direction.angle()
 
 
@@ -37,7 +40,7 @@ func _ready() -> void:
 
 	var collision := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
-	circle.radius = _radius
+	circle.radius = _hit_radius
 	collision.shape = circle
 	add_child(collision)
 
@@ -75,7 +78,7 @@ func _spend() -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2(-4.0, 3.0), _radius + 1.0, Color(0.08, 0.12, 0.16, 0.22))
-	draw_circle(Vector2.ZERO, _radius + 1.0, Color("#ff7a2e"))
-	draw_circle(Vector2(-2.0, -1.0), _radius * 0.55, Color("#ffd35c"))
-	draw_circle(Vector2(_radius * 0.35, 1.0), _radius * 0.28, Color("#fff1c7"))
+	draw_circle(Vector2(-4.0, 3.0), _visual_radius + 1.0, Color(0.08, 0.12, 0.16, 0.22))
+	draw_circle(Vector2.ZERO, _visual_radius + 1.0, Color("#ff7a2e"))
+	draw_circle(Vector2(-2.0, -1.0), _visual_radius * 0.55, Color("#ffd35c"))
+	draw_circle(Vector2(_visual_radius * 0.35, 1.0), _visual_radius * 0.28, Color("#fff1c7"))
