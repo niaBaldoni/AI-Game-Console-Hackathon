@@ -14,7 +14,7 @@ func set_lives(current_lives: int, maximum_lives: int) -> void:
 func _draw() -> void:
     var origin := Vector2(8.0, 6.0)
     for index in max_lives:
-        _draw_heart(origin + Vector2(index * 38.0, 0.0), index < lives)
+        _draw_heart(origin + Vector2(index * 32.0, 0.0), index < lives)
 
 
 func _draw_heart(origin: Vector2, filled: bool) -> void:
@@ -31,7 +31,7 @@ func _draw_heart(origin: Vector2, filled: bool) -> void:
         Vector2(3, 6), Vector2(4, 6), Vector2(5, 6), Vector2(6, 6),
         Vector2(4, 7), Vector2(5, 7),
     ]
-    var pixel := 3.0
+    var pixel := 2.6
     for cell: Vector2 in cells:
         var rect := Rect2(origin + cell * pixel, Vector2(pixel, pixel))
         draw_rect(rect, fill)

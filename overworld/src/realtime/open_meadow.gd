@@ -34,6 +34,7 @@ func _ready() -> void:
     _ensure_host_mcp_files()
     _build_world_collisions()
     _spawn_pack()
+    _spawn_pickups()
 
     for child in enemies.get_children():
         var enemy := child as MeadowEnemy
@@ -201,6 +202,42 @@ func _spawn_pack() -> void:
         enemies.add_child(spawned)
         spawned.apply_kind(spec["kind"])
         _wire_enemy(spawned)
+
+
+func _spawn_pickups() -> void:
+    var specs := [
+        {"position": Vector2(260.0, 180.0), "kind": MeadowPickup.Kind.HEART},
+        {"position": Vector2(1680.0, 220.0), "kind": MeadowPickup.Kind.POWER},
+        {"position": Vector2(240.0, 980.0), "kind": MeadowPickup.Kind.SHIELD},
+        {"position": Vector2(1960.0, 980.0), "kind": MeadowPickup.Kind.HEART},
+        {"position": Vector2(1180.0, 430.0), "kind": MeadowPickup.Kind.HEART},
+        {"position": Vector2(900.0, 1180.0), "kind": MeadowPickup.Kind.POWER},
+        {"position": Vector2(2100.0, 160.0), "kind": MeadowPickup.Kind.SHIELD},
+    ]
+    var folder := get_node_or_null("Pickups") as Node2D
+    if folder == null:
+        folder = Node2D.new()
+        folder.name = "Pickups"
+        add_child(folder)
+    for index in specs.size():
+        var spec: Dictionary = specs[index]
+        var pickup := MeadowPickup.new()
+        pickup.name = "Pickup%d" % index
+        pickup.position = spec["position"]
+        pickup.kind = spec["kind"]
+        pickup.collected.connect(_on_pickup_collected)
+        folder.add_child(pickup)
+
+
+func _on_pickup_collected(kind: MeadowPickup.Kind) -> void:
+    match kind:
+        MeadowPickup.Kind.HEART:
+            hud.show_message("HEART!")
+            hud.set_player_health(player.health, player.max_health)
+        MeadowPickup.Kind.POWER:
+            hud.show_message("POWER UP!")
+        MeadowPickup.Kind.SHIELD:
+            hud.show_message("SHIELD ON!")
 
 
 func _wire_enemy(enemy: MeadowEnemy) -> void:

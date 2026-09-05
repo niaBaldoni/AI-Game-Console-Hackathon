@@ -11,7 +11,7 @@ enum Mode { TITLE, PAUSED, DEFEATED }
 ## Set true before reload_current_scene() to skip the title and drop into play.
 static var start_in_game: bool = false
 
-const PANEL_SIZE := Vector2(420.0, 348.0)
+const PANEL_SIZE := Vector2(420.0, 380.0)
 const GOLD := Color("#f2c14e")
 const INK := Color(0.08, 0.12, 0.16, 0.94)
 const MIST := Color("#d8e7ff")
@@ -111,12 +111,12 @@ func _refresh_copy() -> void:
     match _mode:
         Mode.TITLE:
             _title_label.text = "OPEN MEADOW"
-            _subtitle_label.text = "Four lands. Three hearts."
+            _subtitle_label.text = "Five hearts. Find more in the wild."
             _primary_button.text = "PLAY"
             _restart_button.visible = false
             _hint_label.text = "JOYSTICK SELECT    A CONFIRM"
             _tutorial_label.visible = true
-            _tutorial_label.text = "JOYSTICK WALK\nA TAP SWING   HOLD A SPIN\nB PAUSE   THREE HEARTS"
+            _tutorial_label.text = "JOYSTICK WALK\nA TAP SWING  HOLD A SPIN\nB PAUSE\nPINK HEARTS HEAL  GOLD STARS HIT HARDER  BLUE RINGS SHIELD"
         Mode.DEFEATED:
             _title_label.text = "YOU FELL"
             _subtitle_label.text = "Walk back, or take another swing."
@@ -198,6 +198,11 @@ func _build_ui() -> void:
     dim.color = Color(0.04, 0.09, 0.06, 0.72)
     dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
     root.add_child(dim)
+    var scan := ColorRect.new()
+    scan.set_anchors_preset(Control.PRESET_FULL_RECT)
+    scan.color = Color(0.02, 0.04, 0.03, 0.18)
+    scan.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(scan)
 
     var panel := Panel.new()
     panel.position = Vector2(270.0, 111.0)
@@ -208,31 +213,31 @@ func _build_ui() -> void:
 
     var accent := ColorRect.new()
     accent.position = Vector2(18.0, 18.0)
-    accent.size = Vector2(8.0, 312.0)
+    accent.size = Vector2(8.0, 344.0)
     accent.color = GOLD
     accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
     panel.add_child(accent)
 
     _title_label = _make_label(panel, "OPEN MEADOW", Vector2(40.0, 14.0), 28, GOLD)
-    _subtitle_label = _make_label(panel, "Four lands. Three hearts.", Vector2(40.0, 48.0), 14, MIST)
+    _subtitle_label = _make_label(panel, "Five hearts. Find more in the wild.", Vector2(40.0, 48.0), 14, MIST)
 
     _tutorial_label = _make_label(panel, "", Vector2(40.0, 74.0), 13, Color("#fff1c7"))
-    _tutorial_label.size = Vector2(340.0, 58.0)
+    _tutorial_label.size = Vector2(340.0, 72.0)
     _tutorial_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
-    _primary_button = _make_button(panel, "PLAY", Vector2(40.0, 136.0), _on_primary_pressed)
-    _restart_button = _make_button(panel, "RESTART", Vector2(40.0, 186.0), _on_restart_pressed)
-    _quit_button = _make_button(panel, "QUIT", Vector2(40.0, 236.0), _on_quit_pressed)
+    _primary_button = _make_button(panel, "PLAY", Vector2(40.0, 158.0), _on_primary_pressed)
+    _restart_button = _make_button(panel, "RESTART", Vector2(40.0, 208.0), _on_restart_pressed)
+    _quit_button = _make_button(panel, "QUIT", Vector2(40.0, 258.0), _on_quit_pressed)
 
     _hint_label = _make_label(
         panel,
         "JOYSTICK SELECT    A CONFIRM",
-        Vector2(40.0, 292.0),
+        Vector2(40.0, 318.0),
         13,
         Color("#fff1c7")
     )
     _hint_label.size = Vector2(360.0, 28.0)
-    panel.position = Vector2(270.0, 96.0)
+    panel.position = Vector2(270.0, 80.0)
     _refresh_focus_neighbors()
 
 
@@ -241,8 +246,13 @@ func _make_label(parent: Control, text: String, label_position: Vector2, font_si
     label.text = text
     label.position = label_position
     label.size = Vector2(360.0, 32.0)
+    var font := _retro_font()
+    if font != null:
+        label.add_theme_font_override("font", font)
     label.add_theme_font_size_override("font_size", font_size)
     label.add_theme_color_override("font_color", color)
+    label.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.08, 1.0))
+    label.add_theme_constant_override("outline_size", 4)
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     parent.add_child(label)
     return label
@@ -254,11 +264,16 @@ func _make_button(parent: Control, text: String, button_position: Vector2, callb
     button.position = button_position
     button.size = Vector2(340.0, 42.0)
     button.focus_mode = Control.FOCUS_ALL
-    button.add_theme_font_size_override("font_size", 18)
+    var font := _retro_font()
+    if font != null:
+        button.add_theme_font_override("font", font)
+    button.add_theme_font_size_override("font_size", 16)
     button.add_theme_color_override("font_color", MIST)
     button.add_theme_color_override("font_hover_color", Color("#1b2430"))
     button.add_theme_color_override("font_focus_color", Color("#1b2430"))
     button.add_theme_color_override("font_pressed_color", Color("#1b2430"))
+    button.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.08, 1.0))
+    button.add_theme_constant_override("outline_size", 3)
     button.add_theme_stylebox_override("normal", _button_style(INK, Color("#5b8f52")))
     button.add_theme_stylebox_override("hover", _button_style(GOLD, GOLD))
     button.add_theme_stylebox_override("focus", _button_style(GOLD, GOLD))
@@ -266,6 +281,13 @@ func _make_button(parent: Control, text: String, button_position: Vector2, callb
     button.pressed.connect(callback)
     parent.add_child(button)
     return button
+
+
+func _retro_font() -> Font:
+    var font := SystemFont.new()
+    font.font_names = PackedStringArray(["Press Start 2P", "Monaco", "Menlo", "Courier New", "monospace"])
+    font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+    return font
 
 
 func _panel_style() -> StyleBoxFlat:

@@ -82,10 +82,10 @@ func _build_ui() -> void:
 
     _hearts = MeadowHearts.new()
     _hearts.name = "Hearts"
-    _hearts.position = Vector2(414.0, 10.0)
-    _hearts.size = Vector2(132.0, 34.0)
+    _hearts.position = Vector2(372.0, 8.0)
+    _hearts.size = Vector2(220.0, 36.0)
     _hearts.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    _hearts.set_lives(3, 3)
+    _hearts.set_lives(5, 5)
     _ui_root.add_child(_hearts)
 
     var panel := ColorRect.new()
@@ -138,7 +138,8 @@ func _build_ui() -> void:
     _minimap.custom_minimum_size = Vector2(160.0, 160.0)
     _ui_root.add_child(_minimap)
 
-    var legend := _make_label("RED BRUTE   PURPLE MAGE   HOLD A SPIN", Vector2(188.0, 502.0), 12)
+    var legend := _make_label("RED BRUTE  PURPLE MAGE  PINK HEART  GOLD POWER  BLUE SHIELD", Vector2(188.0, 502.0), 11)
+    legend.size = Vector2(760.0, 28.0)
     legend.add_theme_color_override("font_color", Color("#d8e7ff"))
 
 
@@ -147,8 +148,14 @@ func _make_label(value: String, label_position: Vector2, font_size: int) -> Labe
     label.text = value
     label.position = label_position
     label.size = Vector2(420.0, 28.0)
+    var font := SystemFont.new()
+    font.font_names = PackedStringArray(["Press Start 2P", "Monaco", "Menlo", "Courier New", "monospace"])
+    font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+    label.add_theme_font_override("font", font)
     label.add_theme_font_size_override("font_size", font_size)
     label.add_theme_color_override("font_color", Color("#ffffff"))
+    label.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.08, 1.0))
+    label.add_theme_constant_override("outline_size", 3)
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _ui_root.add_child(label)
     return label

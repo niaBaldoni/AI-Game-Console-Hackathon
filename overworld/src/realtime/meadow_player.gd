@@ -10,7 +10,8 @@ signal damaged(amount: int)
 signal defeated
 
 @export var move_speed: float = 190.0
-@export var max_health: int = 3
+@export var max_health: int = 5
+@export var max_heart_cap: int = 6
 @export var attack_damage: int = 1
 @export var attack_reach: float = 52.0
 @export var attack_width: float = 20.0
@@ -23,7 +24,7 @@ signal defeated
 @export var spin_attack_duration: float = 0.30
 @export var spin_attack_cooldown: float = 0.52
 @export var body_radius: float = 9.0
-@export var hurt_iframes: float = 0.55
+@export var hurt_iframes: float = 1.05
 
 enum AttackMode { NONE, QUICK, SPIN }
 
@@ -41,6 +42,8 @@ var _attack_input_blocked: bool = false
 var _charge_elapsed: float = 0.0
 var _charge_ready: bool = false
 var _hurt_timer: float = 0.0
+var _power_timer: float = 0.0
+var _shield_timer: float = 0.0
 var _is_defeated: bool = false
 
 
@@ -60,6 +63,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
     _attack_cooldown_remaining = maxf(_attack_cooldown_remaining - delta, 0.0)
     _hurt_timer = maxf(_hurt_timer - delta, 0.0)
+    _power_timer = maxf(_power_timer - delta, 0.0)
+    _shield_timer = maxf(_shield_timer - delta, 0.0)
 
     if _is_defeated:
         velocity = Vector2.ZERO
@@ -140,8 +145,50 @@ func is_alive() -> bool:
     return not _is_defeated
 
 
+func collect_heart() -> void:
+    if _is_defeated:
+        return
+    if health < max_health:
+        health += 1
+    elif max_health < max_heart_cap:
+        max_health += 1
+        health = max_health
+    health_changed.emit(health, max_health)
+    queue_redraw()
+
+
+func grant_power(duration: float) -> void:
+    _power_timer = maxf(_power_timer, duration)
+    queue_redraw()
+
+
+func grant_shield(duration: float) -> void:
+    _shield_timer = maxf(_shield_timer, duration)
+    queue_redraw()
+
+
+func has_power() -> bool:
+    return _power_timer > 0.0
+
+
+func has_shield() -> bool:
+    return _shield_timer > 0.0
+
+
+func _quick_damage() -> int:
+    return attack_damage + (1 if has_power() else 0)
+
+
+func _spin_damage() -> int:
+    return spin_attack_damage + (1 if has_power() else 0)
+
+
 func take_damage(amount: int, direction: Vector2) -> bool:
     if _is_defeated or _hurt_timer > 0.0:
+        return false
+    if _shield_timer > 0.0:
+        _hurt_timer = hurt_iframes * 0.35
+        queue_redraw()
         return false
 
     var applied := maxi(amount, 1)
@@ -182,6 +229,8 @@ func get_state() -> Dictionary:
         "attack_cooldown": _attack_cooldown_remaining,
         "health": health,
         "max_health": max_health,
+        "power": has_power(),
+        "shield": has_shield(),
         "alive": is_alive(),
     }
 
@@ -282,10 +331,10 @@ func _try_hit_target() -> void:
         if target_direction == Vector2.ZERO or facing.dot(target_direction) < 0.2:
             continue
 
-        if target.take_damage(attack_damage, facing):
+        if target.take_damage(_quick_damage(), facing):
             _hit_targets.append(target)
             _target = target
-            attack_hit.emit(target, attack_damage)
+            attack_hit.emit(target, _quick_damage())
 
 
 func _try_spin_hit_targets() -> void:
@@ -302,10 +351,10 @@ func _try_spin_hit_targets() -> void:
         var knockback_direction := offset.normalized()
         if knockback_direction == Vector2.ZERO:
             knockback_direction = facing
-        if target.take_damage(spin_attack_damage, knockback_direction):
+        if target.take_damage(_spin_damage(), knockback_direction):
             _hit_targets.append(target)
             _target = target
-            attack_hit.emit(target, spin_attack_damage)
+            attack_hit.emit(target, _spin_damage())
 
 
 func _attack_mode_name() -> String:
@@ -325,11 +374,19 @@ func _draw() -> void:
         tunic = Color("#56616b")
     elif is_charging_spin():
         tunic = Color("#f2c14e")
+    elif has_power():
+        tunic = Color("#ffb347")
     draw_rect(Rect2(-10.0, -10.0, 20.0, 20.0), tunic)
     draw_rect(Rect2(-7.0, -8.0, 14.0, 7.0), Color("#f0c27b"))
     draw_rect(Rect2(-5.0, -5.0, 3.0, 3.0), Color("#28324a"))
     draw_rect(Rect2(2.0, -5.0, 3.0, 3.0), Color("#28324a"))
     draw_line(Vector2.ZERO, facing * 13.0, Color("#d8e7ff"), 3.0)
+
+    if has_shield():
+        var pulse := 0.35 + 0.15 * sin(Time.get_ticks_msec() * 0.008)
+        draw_arc(Vector2.ZERO, 16.0, 0.0, TAU, 20, Color(0.45, 0.9, 1.0, pulse), 2.0, true)
+    if has_power():
+        draw_circle(Vector2.ZERO, 13.0, Color(0.95, 0.7, 0.15, 0.10))
 
     if _attack_input_held:
         var charge_progress := get_charge_progress()

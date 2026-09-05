@@ -34,6 +34,7 @@ func _draw() -> void:
     var map_rotation := 0.0
     _draw_world_features(center, radius, map_rotation)
     _draw_enemy_blips(center, radius, map_rotation)
+    _draw_pickup_blips(center, radius, map_rotation)
     _draw_player_arrow(center)
     _draw_compass(center, radius, map_rotation)
 
@@ -92,6 +93,19 @@ func _draw_enemy_blips(center: Vector2, radius: float, map_rotation: float) -> v
         var blip_radius := enemy.get_radar_blip_radius()
         draw_circle(blip, blip_radius + 1.5, Color(0.05, 0.05, 0.05, 0.85))
         draw_circle(blip, blip_radius, enemy.get_radar_color())
+
+
+func _draw_pickup_blips(center: Vector2, radius: float, map_rotation: float) -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    for node in tree.get_nodes_in_group("meadow_pickup"):
+        var pickup := node as MeadowPickup
+        if pickup == null:
+            continue
+        var blip := _world_to_radar(pickup.global_position, center, radius, map_rotation, true)
+        draw_circle(blip, 3.2, Color(0.05, 0.05, 0.05, 0.85))
+        draw_circle(blip, 2.4, pickup.get_radar_color())
 
 
 func _draw_player_arrow(center: Vector2) -> void:
