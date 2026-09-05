@@ -1,0 +1,42 @@
+Summer Engine 3D RPG Template
+
+This template's source code (script files, scene files, shaders, and generally all
+Summer Engine-generated resources) is available under the MIT license.
+Art assets (image textures and 3D models) are CC-By 4.0.
+
+In short, you can reuse code and art assets in your own projects freely, including
+commercial ones, as long as you give credit where due.
+
+For assets, you can add this to your credits:
+"Additional assets CC-By 4.0 GDQuest (https://www.gdquest.com/)".
+
+For code, you can add this to your credits:
+"Portions of this project use code from GDQuest (https://www.gdquest.com/) licensed under MIT".
+
+It really helps when you credit creators, so thank you in advance!
+
+The above is for clarity. The exact terms of the MIT license follow below.
+
+---
+
+MIT License
+
+Copyright (c) 2025 Summer Engine
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
