@@ -40,6 +40,8 @@ func _ready() -> void:
             _register_enemy(enemy)
 
     player.attack_started.connect(_on_player_attack_started)
+    player.spin_charge_started.connect(_on_player_spin_charge_started)
+    player.spin_attack_started.connect(_on_player_spin_attack_started)
     player.attack_hit.connect(_on_player_attack_hit)
     player.damaged.connect(_on_player_damaged)
     player.defeated.connect(_on_player_defeated)
@@ -272,6 +274,14 @@ func _publish_agent_summary() -> void:
 
 func _on_player_attack_started() -> void:
     hud.show_message("SWORD SWING")
+
+
+func _on_player_spin_charge_started() -> void:
+    hud.show_message("CHARGE SPIN")
+
+
+func _on_player_spin_attack_started() -> void:
+    hud.show_message("SPIN ATTACK")
 
 
 func _on_player_attack_hit(target: MeadowEnemy, _damage: int) -> void:
