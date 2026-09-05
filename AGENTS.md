@@ -55,9 +55,10 @@ Detect what is present and install or request only what is missing.
 
 - The active project is [`overworld/`](overworld/). Its main scene is
   `res://src/realtime/open_meadow.tscn` (`Open Meadow`), a 2400×1350 2D meadow
-  with free movement, sword swings, melee and mage enemies, fireballs, player
-  health, and a north-up radar. Player-facing controls are **joystick to move,
-  A to swing**.
+  with four colored lands, free movement, tap-A slash and hold-A charge spin,
+  melee brutes and mage fireballs, five starting hearts, map hearts plus
+  power/shield pickups, a north-up radar, and a retro title/pause/defeat menu.
+  Player-facing controls are **joystick to move, A to swing/spin, B to pause**.
 - The turn-based OpenRPG template is no longer part of the active build. Its
   legacy Dialogic/combat/field assets were intentionally removed; the safety
   branch `main-pre-legacy-cleanup` retains the pre-cleanup tree if historical
@@ -75,13 +76,15 @@ Detect what is present and install or request only what is missing.
   `/home/arduino/ArduinoApps/open-meadow/game`, approve the server with
   `agent mcp enable summer-runtime`, then inspect it with
   `agent mcp list-tools summer-runtime`.
-- `origin/main` currently matches local `main` at merge commit `d363279`, which
-  includes the MCP path fix and the remote radar/melee/mage gameplay updates.
-  The board currently has the earlier corrected MCP-path build; re-export and
+- `origin/main` tracks the current Open Meadow slice (pause menu, charge spin,
+  lands, longer lives, pickups, retro menus, and MCP path fix). Editor-local
+  `overworld/project.godot` rewrites that drop `import_etc2_astc` must not be
+  committed. The board may still be on an earlier export; re-export and
   redeploy before claiming the latest gameplay is on hardware.
-- Verified on the host: a clean Summer headless boot and all three tests in
-  `runtime-mcp/tests` pass. A connected-display, physical-controller playtest
-  is still required before calling the device delivery complete.
+- Verified on the host: a clean Summer headless import for the pickup scripts
+  and all three tests in `runtime-mcp/tests` pass. A connected-display,
+  physical-controller playtest is still required before calling the device
+  delivery complete.
 
 ## Required project configuration
 

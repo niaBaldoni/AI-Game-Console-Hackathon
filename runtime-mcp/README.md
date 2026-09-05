@@ -7,11 +7,13 @@ file exchange through the game runner's shared app mount.
 
 The first milestone intentionally exposes only two tools:
 
-- `get_game_state` reads the compact state published by the game.
+- `get_game_state` reads the compact state published by the game (player
+  position, attack, health, power/shield flags, and active enemies).
 - `set_agent_intent` changes the game-owned opponent intent to `idle`, `left`,
   `right`, or `act`.
 - `spawn_enemy` queues an enemy at bounded meadow coordinates with optional
-  health (default 3).
+  health (kind defaults apply if omitted) and optional `kind` of `brute` or
+  `mage`.
 
 There is no shell, filesystem, scene-tree, arbitrary property, or script
 execution tool.

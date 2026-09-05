@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-05  
 **Project:** Open Meadow  
-**Status:** Design approved
+**Status:** Implemented in `overworld/src/realtime/meadow_player.gd` (5 Sep 2026)
 
 ## Goal
 

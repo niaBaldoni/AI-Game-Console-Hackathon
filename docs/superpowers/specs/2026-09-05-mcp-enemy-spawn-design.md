@@ -127,3 +127,9 @@ The game still owns bounds, roster limit, and node creation. If `health` is
 omitted, the kind's default HP is used (brute 3, mage 2). Those defaults are
 fodder stats, not bosses.
 
+## Update: published player flags (5 Sep 2026)
+
+`get_game_state` player payload also includes `power` and `shield` booleans
+when those timed pickups are active. The game still owns timers and combat
+math; the MCP tools do not grant pickups.
+
