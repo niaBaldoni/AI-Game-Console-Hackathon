@@ -88,42 +88,6 @@ func _build_ui() -> void:
     _hearts.set_lives(5, 5)
     _ui_root.add_child(_hearts)
 
-    var panel := ColorRect.new()
-    panel.position = Vector2(16.0, 16.0)
-    panel.size = Vector2(270.0, 132.0)
-    panel.color = Color(0.08, 0.12, 0.16, 0.88)
-    panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    _ui_root.add_child(panel)
-
-    var title := _make_label("OPEN MEADOW", Vector2(16.0, 10.0), 18)
-    title.add_theme_color_override("font_color", Color("#f2c14e"))
-
-    var controls := _make_label("JOYSTICK MOVE   A SWING   B PAUSE", Vector2(16.0, 38.0), 14)
-    controls.add_theme_color_override("font_color", Color("#d8e7ff"))
-
-    _player_label = _make_label("LIVES", Vector2(16.0, 60.0), 14)
-    _player_label.add_theme_color_override("font_color", Color("#ff8b96"))
-
-    _target_label = _make_label("BRUTE  3 / 3", Vector2(16.0, 82.0), 14)
-    _target_label.add_theme_color_override("font_color", Color("#fff1c7"))
-
-    var health_back := ColorRect.new()
-    health_back.position = Vector2(16.0, 106.0)
-    health_back.size = Vector2(180.0, 6.0)
-    health_back.color = Color("#263238")
-    health_back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    panel.add_child(health_back)
-
-    _health_fill = ColorRect.new()
-    _health_fill.position = health_back.position
-    _health_fill.size = Vector2(180.0, 6.0)
-    _health_fill.color = Color("#f2c14e")
-    _health_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    panel.add_child(_health_fill)
-
-    _message_label = _make_label("", Vector2(16.0, 148.0), 16)
-    _message_label.add_theme_color_override("font_color", Color("#fff1c7"))
-
     _minimap = MeadowMinimap.new()
     _minimap.name = "Radar"
     _minimap.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
