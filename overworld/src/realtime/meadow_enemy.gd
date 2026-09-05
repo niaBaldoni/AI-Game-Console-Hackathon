@@ -11,6 +11,7 @@ signal hit_landed(damage: int)
 @export var body_radius: float = 13.0
 
 var health: int = 0
+var runtime_id: int = 0
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _knockback_timer: float = 0.0
 var _hurt_timer: float = 0.0
@@ -19,6 +20,15 @@ var _is_defeated: bool = false
 
 func _ready() -> void:
     add_to_group("meadow_enemy")
+    var collision_shape := get_node_or_null("CollisionShape2D") as CollisionShape2D
+    if collision_shape == null:
+        collision_shape = CollisionShape2D.new()
+        collision_shape.name = "CollisionShape2D"
+        add_child(collision_shape)
+    if collision_shape.shape == null:
+        var rectangle := RectangleShape2D.new()
+        rectangle.size = Vector2(body_radius * 2.0, body_radius * 2.0)
+        collision_shape.shape = rectangle
     health = max_health
     health_changed.emit(health, max_health)
     queue_redraw()
@@ -72,6 +82,7 @@ func take_damage(amount: int, direction: Vector2) -> bool:
 
 func get_state() -> Dictionary:
     return {
+        "id": runtime_id,
         "health": health,
         "max_health": max_health,
         "alive": is_alive(),

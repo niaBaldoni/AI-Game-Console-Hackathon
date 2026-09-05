@@ -13,11 +13,10 @@ signal attack_hit(target: MeadowEnemy, damage: int)
 
 var facing: Vector2 = Vector2.DOWN
 
-var _target: MeadowEnemy
 var _attack_active: bool = false
 var _attack_elapsed: float = 0.0
 var _attack_cooldown_remaining: float = 0.0
-var _has_hit: bool = false
+var _hit_targets: Array[MeadowEnemy] = []
 
 
 func _ready() -> void:
@@ -53,10 +52,6 @@ func _physics_process(delta: float) -> void:
     queue_redraw()
 
 
-func set_enemy_target(target: MeadowEnemy) -> void:
-    _target = target
-
-
 func is_attacking() -> bool:
     return _attack_active
 
@@ -77,28 +72,30 @@ func _begin_attack() -> void:
     _attack_active = true
     _attack_elapsed = 0.0
     _attack_cooldown_remaining = attack_cooldown
-    _has_hit = false
+    _hit_targets.clear()
     attack_started.emit()
     _try_hit_target()
     queue_redraw()
 
 
 func _try_hit_target() -> void:
-    if _has_hit or _target == null or not _target.is_alive():
-        return
+    for candidate in get_tree().get_nodes_in_group("meadow_enemy"):
+        var target := candidate as MeadowEnemy
+        if target == null or _hit_targets.has(target) or not target.is_alive():
+            continue
 
-    var offset := _target.global_position - global_position
-    var distance := offset.length()
-    if distance > attack_reach + _target.body_radius:
-        return
+        var offset := target.global_position - global_position
+        var distance := offset.length()
+        if distance > attack_reach + target.body_radius:
+            continue
 
-    var target_direction := offset.normalized()
-    if target_direction == Vector2.ZERO or facing.dot(target_direction) < 0.2:
-        return
+        var target_direction := offset.normalized()
+        if target_direction == Vector2.ZERO or facing.dot(target_direction) < 0.2:
+            continue
 
-    if _target.take_damage(attack_damage, facing):
-        _has_hit = true
-        attack_hit.emit(_target, attack_damage)
+        if target.take_damage(attack_damage, facing):
+            _hit_targets.append(target)
+            attack_hit.emit(target, attack_damage)
 
 
 func _draw() -> void:

@@ -31,13 +31,15 @@ limit_top = 0
 limit_right = 2400
 limit_bottom = 1350
 
-[node name="Enemy" type="CharacterBody2D" parent="."]
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="Enemy" type="CharacterBody2D" parent="Enemies"]
 position = Vector2(600, 270)
 collision_layer = 1
 collision_mask = 1
 script = ExtResource("3_enemy")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemies/Enemy"]
 shape = SubResource("RectangleShape2D_enemy")
 
 [node name="Obstacles" type="Node2D" parent="."]

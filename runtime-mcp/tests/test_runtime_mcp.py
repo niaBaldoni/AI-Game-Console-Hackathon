@@ -21,12 +21,15 @@ class MockState:
     def __init__(self) -> None:
         self.intent = "idle"
         self.revision = 0
+        self.next_enemy_id = 1
+        self.enemies: list[dict[str, Any]] = []
 
     def state(self) -> dict[str, Any]:
         return {
             "agent_intent": self.intent,
             "revision": self.revision,
             "summary": {"mock": True},
+            "enemies": list(self.enemies),
         }
 
 
@@ -44,6 +47,27 @@ class MockBridgeHandler(socketserver.StreamRequestHandler):
                 state.intent = params["intent"]
                 state.revision += 1
             response = {"ok": True, "result": state.state()}
+        elif method == "spawn_enemy":
+            state = self.server.state  # type: ignore[attr-defined]
+            enemy = {
+                "id": state.next_enemy_id,
+                "position": {"x": params["x"], "y": params["y"]},
+                "health": params.get("health", 3),
+                "max_health": params.get("health", 3),
+                "alive": True,
+            }
+            state.next_enemy_id += 1
+            state.enemies.append(enemy)
+            response = {
+                "ok": True,
+                "result": {
+                    "queued": True,
+                    "spawned": True,
+                    "request_id": enemy["id"],
+                    "position": enemy["position"],
+                    "health": enemy["health"],
+                },
+            }
         else:
             response = {
                 "ok": False,
@@ -79,6 +103,11 @@ class RuntimeMcpTests(unittest.TestCase):
         self.assertEqual(after["agent_intent"], "right")
         self.assertEqual(after["revision"], 1)
 
+        spawned = client.request("spawn_enemy", {"x": 720.0, "y": 360.0, "health": 4})
+        self.assertTrue(spawned["queued"])
+        self.assertEqual(spawned["health"], 4)
+        self.assertEqual(client.request("get_game_state", {})["enemies"][0]["id"], 1)
+
     def test_stdio_mcp_discovers_and_calls_tools(self) -> None:
         env = os.environ.copy()
         env["SUMMER_GAME_MCP_PORT"] = str(self.bridge.server_address[1])
@@ -109,6 +138,30 @@ class RuntimeMcpTests(unittest.TestCase):
                 "method": "tools/call",
                 "params": {"name": "get_game_state", "arguments": {}},
             },
+            {
+                "jsonrpc": "2.0",
+                "id": 5,
+                "method": "tools/call",
+                "params": {
+                    "name": "spawn_enemy",
+                    "arguments": {"x": 720, "y": 360, "health": 4},
+                },
+            },
+            {
+                "jsonrpc": "2.0",
+                "id": 6,
+                "method": "tools/call",
+                "params": {"name": "get_game_state", "arguments": {}},
+            },
+            {
+                "jsonrpc": "2.0",
+                "id": 7,
+                "method": "tools/call",
+                "params": {
+                    "name": "spawn_enemy",
+                    "arguments": {"x": 2400, "y": 360, "health": 4},
+                },
+            },
         ]
         stdin_payload = b"".join(
             (json.dumps(request, separators=(",", ":")) + "\n").encode("utf-8")
@@ -117,12 +170,15 @@ class RuntimeMcpTests(unittest.TestCase):
         stdout, stderr = process.communicate(stdin_payload, timeout=5)
         self.assertEqual(process.returncode, 0, stderr.decode("utf-8"))
         responses = [json.loads(line) for line in stdout.splitlines()]
-        self.assertEqual(len(responses), 4)
+        self.assertEqual(len(responses), 7)
         self.assertEqual(responses[0]["result"]["serverInfo"]["name"], "summer-runtime")
         tool_names = [tool["name"] for tool in responses[1]["result"]["tools"]]
-        self.assertEqual(tool_names, ["get_game_state", "set_agent_intent"])
+        self.assertEqual(tool_names, ["get_game_state", "set_agent_intent", "spawn_enemy"])
         self.assertEqual(responses[2]["result"]["structuredContent"]["agent_intent"], "left")
         self.assertEqual(responses[3]["result"]["structuredContent"]["revision"], 1)
+        self.assertTrue(responses[4]["result"]["structuredContent"]["queued"])
+        self.assertEqual(responses[5]["result"]["structuredContent"]["enemies"][0]["health"], 4)
+        self.assertEqual(responses[6]["error"]["code"], -32602)
 
 
 if __name__ == "__main__":

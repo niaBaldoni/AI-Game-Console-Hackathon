@@ -2,6 +2,8 @@ extends Node2D
 class_name OpenMeadow
 
 const WORLD_SIZE := Vector2(2400.0, 1350.0)
+const MAX_ACTIVE_ENEMIES := 8
+const SPAWN_MARGIN := 24.0
 const OBSTACLES := [
     {"position": Vector2(890.0, 350.0), "size": Vector2(170.0, 42.0)},
     {"position": Vector2(1210.0, 780.0), "size": Vector2(210.0, 42.0)},
@@ -9,23 +11,36 @@ const OBSTACLES := [
 ]
 
 @onready var player: MeadowPlayer = $Player
-@onready var enemy: MeadowEnemy = $Enemy
+@onready var enemies: Node2D = $Enemies
 @onready var hud: MeadowHud = $HUD
 @onready var obstacles: Node2D = $Obstacles
+
+var _next_enemy_runtime_id: int = 1
+var _summary_refresh_timer: float = 0.0
 
 
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
     _build_world_collisions()
 
-    player.set_enemy_target(enemy)
+    for child in enemies.get_children():
+        var enemy := child as MeadowEnemy
+        if enemy != null:
+            _register_enemy(enemy)
+
     player.attack_started.connect(_on_player_attack_started)
     player.attack_hit.connect(_on_player_attack_hit)
-    enemy.health_changed.connect(_on_enemy_health_changed)
-    enemy.defeated.connect(_on_enemy_defeated)
+    AgentBridge.enemy_spawn_requested.connect(_on_enemy_spawn_requested)
 
-    hud.set_enemy_health(enemy.health, enemy.max_health)
+    _publish_agent_summary()
     queue_redraw()
+
+
+func _process(delta: float) -> void:
+    _summary_refresh_timer -= delta
+    if _summary_refresh_timer <= 0.0:
+        _summary_refresh_timer = 0.1
+        _publish_agent_summary()
 
 
 func _draw() -> void:
@@ -50,7 +65,10 @@ func _draw() -> void:
             Color("#416f4a")
         )
         draw_rect(
-            Rect2(obstacle_position - obstacle_size * 0.5 + Vector2(5.0, 5.0), obstacle_size - Vector2(10.0, 10.0)),
+            Rect2(
+                obstacle_position - obstacle_size * 0.5 + Vector2(5.0, 5.0),
+                obstacle_size - Vector2(10.0, 10.0)
+            ),
             Color("#5b8f52")
         )
 
@@ -73,10 +91,26 @@ func _draw() -> void:
 
 
 func _build_world_collisions() -> void:
-    _add_boundary(Vector2(WORLD_SIZE.x * 0.5, -12.0), Vector2(WORLD_SIZE.x, 24.0), "NorthBoundary")
-    _add_boundary(Vector2(WORLD_SIZE.x * 0.5, WORLD_SIZE.y + 12.0), Vector2(WORLD_SIZE.x, 24.0), "SouthBoundary")
-    _add_boundary(Vector2(-12.0, WORLD_SIZE.y * 0.5), Vector2(24.0, WORLD_SIZE.y), "WestBoundary")
-    _add_boundary(Vector2(WORLD_SIZE.x + 12.0, WORLD_SIZE.y * 0.5), Vector2(24.0, WORLD_SIZE.y), "EastBoundary")
+    _add_boundary(
+        Vector2(WORLD_SIZE.x * 0.5, -12.0),
+        Vector2(WORLD_SIZE.x, 24.0),
+        "NorthBoundary"
+    )
+    _add_boundary(
+        Vector2(WORLD_SIZE.x * 0.5, WORLD_SIZE.y + 12.0),
+        Vector2(WORLD_SIZE.x, 24.0),
+        "SouthBoundary"
+    )
+    _add_boundary(
+        Vector2(-12.0, WORLD_SIZE.y * 0.5),
+        Vector2(24.0, WORLD_SIZE.y),
+        "WestBoundary"
+    )
+    _add_boundary(
+        Vector2(WORLD_SIZE.x + 12.0, WORLD_SIZE.y * 0.5),
+        Vector2(24.0, WORLD_SIZE.y),
+        "EastBoundary"
+    )
 
     for index in OBSTACLES.size():
         var obstacle: Dictionary = OBSTACLES[index]
@@ -98,17 +132,106 @@ func _add_boundary(center: Vector2, size: Vector2, node_name: String) -> void:
     obstacles.add_child(body)
 
 
+func _register_enemy(enemy: MeadowEnemy) -> void:
+    if enemy.runtime_id <= 0:
+        enemy.runtime_id = _next_enemy_runtime_id
+        _next_enemy_runtime_id += 1
+    enemy.health_changed.connect(_on_enemy_health_changed.bind(enemy))
+    enemy.defeated.connect(_on_enemy_defeated.bind(enemy))
+
+
+func _on_enemy_spawn_requested(
+    request_id: int,
+    spawn_position: Vector2,
+    health: int
+) -> void:
+    if _alive_enemy_count() >= MAX_ACTIVE_ENEMIES:
+        AgentBridge.resolve_spawn_request(request_id, {
+            "accepted": false,
+            "error_code": "enemy_limit_reached",
+            "error_message": "The meadow enemy roster is full",
+        })
+        hud.show_message("ENEMY ROSTER FULL")
+        return
+
+    if spawn_position.x < SPAWN_MARGIN or spawn_position.x > WORLD_SIZE.x - SPAWN_MARGIN:
+        AgentBridge.resolve_spawn_request(request_id, {
+            "accepted": false,
+            "error_code": "spawn_out_of_bounds",
+            "error_message": "The spawn position is outside the meadow",
+        })
+        hud.show_message("SPAWN OUT OF BOUNDS")
+        return
+    if spawn_position.y < SPAWN_MARGIN or spawn_position.y > WORLD_SIZE.y - SPAWN_MARGIN:
+        AgentBridge.resolve_spawn_request(request_id, {
+            "accepted": false,
+            "error_code": "spawn_out_of_bounds",
+            "error_message": "The spawn position is outside the meadow",
+        })
+        hud.show_message("SPAWN OUT OF BOUNDS")
+        return
+
+    var enemy := MeadowEnemy.new()
+    enemy.name = "Enemy_%03d" % request_id
+    enemy.runtime_id = _next_enemy_runtime_id
+    _next_enemy_runtime_id += 1
+    enemy.max_health = health
+    enemy.position = spawn_position
+    enemies.add_child(enemy)
+    _register_enemy(enemy)
+
+    AgentBridge.resolve_spawn_request(request_id, {
+        "accepted": true,
+        "spawned": true,
+        "request_id": request_id,
+        "enemy_id": enemy.runtime_id,
+        "position": spawn_position,
+        "health": health,
+    })
+    hud.show_message("ENEMY SPAWNED")
+    _publish_agent_summary()
+
+
+func _alive_enemy_count() -> int:
+    var count := 0
+    for child in enemies.get_children():
+        var enemy := child as MeadowEnemy
+        if enemy != null and enemy.is_alive():
+            count += 1
+    return count
+
+
+func _publish_agent_summary() -> void:
+    var enemy_states: Array[Dictionary] = []
+    for child in enemies.get_children():
+        var enemy := child as MeadowEnemy
+        if enemy != null and enemy.is_alive():
+            enemy_states.append(enemy.get_state())
+
+    hud.set_enemy_count(enemy_states.size(), MAX_ACTIVE_ENEMIES)
+    AgentBridge.publish_summary({
+        "player": player.get_state(),
+        "enemies": enemy_states,
+    })
+
+
 func _on_player_attack_started() -> void:
     hud.show_message("SWORD SWING")
 
 
-func _on_player_attack_hit(_target: MeadowEnemy, _damage: int) -> void:
-    hud.show_message("HIT!")
+func _on_player_attack_hit(target: MeadowEnemy, _damage: int) -> void:
+    hud.show_message("HIT ENEMY %d" % target.runtime_id)
 
 
-func _on_enemy_health_changed(current_health: int, maximum_health: int) -> void:
+func _on_enemy_health_changed(
+    current_health: int,
+    maximum_health: int,
+    _enemy: MeadowEnemy
+) -> void:
     hud.set_enemy_health(current_health, maximum_health)
+    _publish_agent_summary()
 
 
-func _on_enemy_defeated() -> void:
-    hud.show_message("ENEMY DEFEATED")
+func _on_enemy_defeated(enemy: MeadowEnemy) -> void:
+    hud.show_message("ENEMY %d DEFEATED" % enemy.runtime_id)
+    _publish_agent_summary()

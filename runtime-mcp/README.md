@@ -9,6 +9,8 @@ The first milestone intentionally exposes only two tools:
 - `get_game_state` reads the compact state published by the game.
 - `set_agent_intent` changes the game-owned opponent intent to `idle`, `left`,
   `right`, or `act`.
+- `spawn_enemy` queues an enemy at bounded meadow coordinates with optional
+  health (default 3).
 
 There is no shell, filesystem, scene-tree, arbitrary property, or script
 execution tool.
@@ -19,13 +21,15 @@ execution tool.
    Autoload named `AgentBridge`.
 2. If `runtime-mcp/` lives at the game project root, copy
    `.cursor/mcp.json.example` to the game project as `.cursor/mcp.json`.
-   This repository already includes an equivalent project-level config at
-   `.cursor/mcp.json`.
+   In this repository the package is one directory above `overworld/`, so
+   `overworld/.cursor/mcp.json` already points to `../runtime-mcp/server.py`
+   (and the repository-root `.cursor/mcp.json` covers agents launched there).
 3. Start the game. The bridge listens on `127.0.0.1:8765`.
 4. From the game project directory, run `agent mcp list` and then
    `agent mcp list-tools summer-runtime`.
 5. Ask Cursor to read the game state, then set the agent intent to `left` or
-   `right`. Game code can react to the signal:
+   `right`, or ask it to spawn an enemy at a coordinate inside the meadow.
+   Game code can react to the intent signal:
 
    ```gdscript
    func _ready() -> void:

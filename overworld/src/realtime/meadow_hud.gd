@@ -31,6 +31,13 @@ func set_enemy_health(current_health: int, maximum_health: int) -> void:
     _health_fill.size.x = 180.0 * health_ratio
 
 
+func set_enemy_count(current_count: int, maximum_count: int) -> void:
+    if _target_label == null:
+        return
+
+    _target_label.text = "ENEMIES  %d / %d" % [current_count, maximum_count]
+
+
 func show_message(message: String) -> void:
     if _message_label == null:
         return

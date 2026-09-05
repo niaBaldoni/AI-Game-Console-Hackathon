@@ -10,6 +10,7 @@ keeps MCP implementation details out of the game.
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 from typing import Any, BinaryIO
@@ -25,6 +26,12 @@ SUPPORTED_PROTOCOL_VERSIONS = (
     "2024-11-05",
 )
 MAX_MESSAGE_BYTES = 64 * 1024
+MEADOW_X_MIN = 24.0
+MEADOW_X_MAX = 2376.0
+MEADOW_Y_MIN = 24.0
+MEADOW_Y_MAX = 1326.0
+MIN_ENEMY_HEALTH = 1
+MAX_ENEMY_HEALTH = 9
 
 TOOLS = [
     {
@@ -56,6 +63,39 @@ TOOLS = [
                 }
             },
             "required": ["intent"],
+            "additionalProperties": False,
+        },
+    },
+    {
+        "name": "spawn_enemy",
+        "description": (
+            "Queue one real-time enemy spawn in the running Open Meadow. "
+            "The game owns the enemy node and enforces its live roster limit."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "minimum": MEADOW_X_MIN,
+                    "maximum": MEADOW_X_MAX,
+                    "description": "Enemy X coordinate inside the meadow.",
+                },
+                "y": {
+                    "type": "number",
+                    "minimum": MEADOW_Y_MIN,
+                    "maximum": MEADOW_Y_MAX,
+                    "description": "Enemy Y coordinate inside the meadow.",
+                },
+                "health": {
+                    "type": "integer",
+                    "minimum": MIN_ENEMY_HEALTH,
+                    "maximum": MAX_ENEMY_HEALTH,
+                    "default": 3,
+                    "description": "Optional enemy health; defaults to 3.",
+                },
+            },
+            "required": ["x", "y"],
             "additionalProperties": False,
         },
     },
@@ -177,6 +217,31 @@ class RuntimeMcpServer:
                 )
             bridge_method = "set_agent_intent"
             bridge_params = {"intent": arguments["intent"]}
+        elif name == "spawn_enemy":
+            invalid_keys = set(arguments) - {"x", "y", "health"}
+            if invalid_keys or "x" not in arguments or "y" not in arguments:
+                return _error_response(
+                    request_id,
+                    -32602,
+                    "spawn_enemy requires only x, y, and optional health",
+                )
+
+            x = arguments["x"]
+            y = arguments["y"]
+            health = arguments.get("health", 3)
+            if not self._valid_number(x) or not self._valid_number(y):
+                return _error_response(request_id, -32602, "spawn_enemy x and y must be finite numbers")
+            if not MEADOW_X_MIN <= float(x) <= MEADOW_X_MAX:
+                return _error_response(request_id, -32602, "spawn_enemy x is outside the meadow")
+            if not MEADOW_Y_MIN <= float(y) <= MEADOW_Y_MAX:
+                return _error_response(request_id, -32602, "spawn_enemy y is outside the meadow")
+            if isinstance(health, bool) or not isinstance(health, int):
+                return _error_response(request_id, -32602, "spawn_enemy health must be an integer")
+            if not MIN_ENEMY_HEALTH <= health <= MAX_ENEMY_HEALTH:
+                return _error_response(request_id, -32602, "spawn_enemy health is outside the allowed range")
+
+            bridge_method = "spawn_enemy"
+            bridge_params = {"x": float(x), "y": float(y), "health": health}
         else:
             return _error_response(request_id, -32601, f"Unknown tool: {name}")
 
@@ -195,6 +260,14 @@ class RuntimeMcpServer:
             "id": request_id,
             "result": _text_result(payload),
         }
+
+    @staticmethod
+    def _valid_number(value: Any) -> bool:
+        return (
+            not isinstance(value, bool)
+            and isinstance(value, (int, float))
+            and math.isfinite(float(value))
+        )
 
 
 def _parse_line(raw_line: bytes) -> dict[str, Any]:
