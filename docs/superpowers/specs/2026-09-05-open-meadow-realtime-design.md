@@ -191,3 +191,11 @@ boosters are now in the meadow, not a full inventory system.
 Fireball **sprites stay large** (normal visual radius 8, charged 16). Collision
 is smaller so shots are easier to dodge: normal hit radius 3.5, charged 6.5.
 Drawn size and hurtbox are independent.
+
+## Update: 25-defeat victory condition (5 Sep 2026)
+
+The active run now tracks confirmed enemy defeats toward a 25-enemy goal. The
+HUD shows `DEFEATS 0 / 25`; the 25th defeat pauses the meadow and opens the
+existing menu as `MEADOW CLEARED`. Button A restarts the run and button B
+returns to the title. The runtime MCP summary publishes the same progress and
+victory flag.

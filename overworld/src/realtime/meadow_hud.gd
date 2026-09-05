@@ -8,6 +8,7 @@ var _player_label: Label
 var _health_fill: ColorRect
 var _hearts: MeadowHearts
 var _minimap: MeadowMinimap
+var _defeat_label: Label
 var _message_time_remaining: float = 0.0
 
 
@@ -58,6 +59,13 @@ func set_enemy_count(current_count: int, maximum_count: int) -> void:
 	_target_label.text = "ENEMIES  %d / %d" % [current_count, maximum_count]
 
 
+func set_defeat_progress(current_count: int, target_count: int) -> void:
+	if _defeat_label == null:
+		return
+
+	_defeat_label.text = "DEFEATS  %d / %d" % [current_count, target_count]
+
+
 func show_message(message: String) -> void:
 	if _message_label == null:
 		return
@@ -79,6 +87,9 @@ func _build_ui() -> void:
 	_hearts.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hearts.set_lives(5, 5)
 	_ui_root.add_child(_hearts)
+
+	_defeat_label = _make_label("DEFEATS  0 / 25", Vector2(16.0, 58.0), 14)
+	_defeat_label.add_theme_color_override("font_color", Color("#f2c14e"))
 
 	_minimap = MeadowMinimap.new()
 	_minimap.name = "Radar"

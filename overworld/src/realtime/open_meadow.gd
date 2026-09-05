@@ -3,6 +3,7 @@ class_name OpenMeadow
 
 const WORLD_SIZE := Vector2(2400.0, 1350.0)
 const MAX_ACTIVE_ENEMIES := 50
+const DEFEATS_TO_WIN := 25
 const SPAWN_MARGIN := 24.0
 const OBSTACLES := [
     {"position": Vector2(890.0, 350.0), "size": Vector2(170.0, 42.0)},
@@ -27,6 +28,8 @@ const PACK := [
 var pause_menu: MeadowPauseMenu
 var _next_enemy_runtime_id: int = 1
 var _summary_refresh_timer: float = 0.0
+var defeated_enemy_count: int = 0
+var game_won: bool = false
 
 
 func _ready() -> void:
@@ -50,6 +53,7 @@ func _ready() -> void:
     player.health_changed.connect(_on_player_health_changed)
     hud.bind_player(player, WORLD_SIZE)
     hud.set_player_health(player.health, player.max_health)
+    hud.set_defeat_progress(defeated_enemy_count, DEFEATS_TO_WIN)
     AgentBridge.enemy_spawn_requested.connect(_on_enemy_spawn_requested)
     _setup_pause_menu()
 
@@ -264,6 +268,14 @@ func _on_enemy_spawn_requested(
     kind_name: String,
     override_health: bool
 ) -> void:
+    if game_won:
+        AgentBridge.resolve_spawn_request(request_id, {
+            "accepted": false,
+            "error_code": "game_won",
+            "error_message": "The meadow has already been cleared",
+        })
+        return
+
     if _alive_enemy_count() >= MAX_ACTIVE_ENEMIES:
         AgentBridge.resolve_spawn_request(request_id, {
             "accepted": false,
@@ -338,6 +350,9 @@ func _publish_agent_summary() -> void:
     AgentBridge.publish_summary({
         "player": player.get_state(),
         "enemies": enemy_states,
+        "defeated_enemies": defeated_enemy_count,
+        "defeat_target": DEFEATS_TO_WIN,
+        "victory": game_won,
     })
 
 
@@ -425,7 +440,18 @@ func _on_enemy_health_changed(
 
 
 func _on_enemy_defeated(enemy: MeadowEnemy) -> void:
-    hud.show_message("ENEMY %d DEFEATED" % enemy.runtime_id)
+    if game_won:
+        return
+
+    defeated_enemy_count += 1
+    hud.set_defeat_progress(defeated_enemy_count, DEFEATS_TO_WIN)
+    if defeated_enemy_count >= DEFEATS_TO_WIN:
+        game_won = true
+        hud.show_message("MEADOW CLEARED")
+        if pause_menu != null:
+            pause_menu.open_victory()
+    else:
+        hud.show_message("ENEMY %d DEFEATED" % enemy.runtime_id)
     _publish_agent_summary()
 
 

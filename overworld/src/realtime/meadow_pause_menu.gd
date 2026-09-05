@@ -6,7 +6,7 @@ signal back_selected
 signal restart_selected
 signal quit_selected
 
-enum Mode { TITLE, PAUSED, DEFEATED }
+enum Mode { TITLE, PAUSED, DEFEATED, VICTORY }
 
 ## Set true before reload_current_scene() to skip the title and drop into play.
 static var start_in_game: bool = false
@@ -46,8 +46,11 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     if not event.is_action_pressed("pause") and not event.is_action_pressed("ui_cancel"):
         return
+
+    var viewport := get_viewport()
+    if viewport != null:
+        viewport.set_input_as_handled()
     if _ignore_pause_frames > 0:
-        get_viewport().set_input_as_handled()
         return
 
     if _is_open:
@@ -59,9 +62,10 @@ func _unhandled_input(event: InputEvent) -> void:
             Mode.PAUSED:
                 close_menu()
                 play_selected.emit()
+            Mode.VICTORY:
+                back_selected.emit()
     else:
         _open_from_gameplay()
-    get_viewport().set_input_as_handled()
 
 
 func is_open() -> bool:
@@ -80,6 +84,11 @@ func open_paused() -> void:
 
 func open_defeated() -> void:
     _mode = Mode.DEFEATED
+    _show_menu()
+
+
+func open_victory() -> void:
+    _mode = Mode.VICTORY
     _show_menu()
 
 
@@ -125,6 +134,13 @@ func _refresh_copy() -> void:
             _restart_button.text = "RESTART"
             _hint_label.text = "JOYSTICK SELECT    A CONFIRM    B BACK"
             _tutorial_label.visible = false
+        Mode.VICTORY:
+            _title_label.text = "MEADOW CLEARED"
+            _subtitle_label.text = "25 enemies defeated. The meadow is safe."
+            _primary_button.text = "PLAY AGAIN"
+            _restart_button.visible = false
+            _hint_label.text = "JOYSTICK SELECT    A RESTART    B TITLE"
+            _tutorial_label.visible = false
         Mode.PAUSED:
             _title_label.text = "PAUSED"
             _subtitle_label.text = "Roads still. Radar holds north."
@@ -156,6 +172,8 @@ func _on_primary_pressed() -> void:
     match _mode:
         Mode.DEFEATED:
             back_selected.emit()
+        Mode.VICTORY:
+            restart_selected.emit()
         Mode.TITLE, Mode.PAUSED:
             close_menu()
             play_selected.emit()
