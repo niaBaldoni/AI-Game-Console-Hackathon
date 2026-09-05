@@ -19,4 +19,5 @@ Player-facing controls and board notes: [`overworld/README.md`](overworld/README
 When we change gameplay, **add** to that spec (or `GameSoul.md`) instead of
 rewriting earlier sections, unless we are actually replacing that behavior.
 
-![Uploading IMG_0337.jpeg…]()
+<img width="4284" height="5712" alt="IMG_0337" src="https://github.com/user-attachments/assets/bc814825-9253-4e2f-ba87-6b2804c42418" />
+
