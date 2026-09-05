@@ -57,6 +57,24 @@ func set_enemy_target(target: MeadowEnemy) -> void:
     _target = target
 
 
+func get_focus_enemy() -> MeadowEnemy:
+    var best: MeadowEnemy = null
+    var best_score := INF
+    for node in get_tree().get_nodes_in_group("meadow_enemy"):
+        var enemy := node as MeadowEnemy
+        if enemy == null or not enemy.is_alive():
+            continue
+        var offset := enemy.global_position - global_position
+        var distance := offset.length()
+        var facing_dot := 1.0 if distance <= 0.001 else facing.dot(offset.normalized())
+        var facing_bonus := 0.0 if facing_dot > 0.15 else 180.0
+        var score := distance + facing_bonus
+        if score < best_score:
+            best_score = score
+            best = enemy
+    return best
+
+
 func is_attacking() -> bool:
     return _attack_active
 
@@ -84,21 +102,36 @@ func _begin_attack() -> void:
 
 
 func _try_hit_target() -> void:
-    if _has_hit or _target == null or not _target.is_alive():
+    if _has_hit:
         return
 
-    var offset := _target.global_position - global_position
-    var distance := offset.length()
-    if distance > attack_reach + _target.body_radius:
+    var best: MeadowEnemy = null
+    var best_distance := INF
+    for node in get_tree().get_nodes_in_group("meadow_enemy"):
+        var enemy := node as MeadowEnemy
+        if enemy == null or not enemy.is_alive():
+            continue
+
+        var offset := enemy.global_position - global_position
+        var distance := offset.length()
+        if distance > attack_reach + enemy.body_radius:
+            continue
+
+        var target_direction := offset.normalized()
+        if target_direction == Vector2.ZERO or facing.dot(target_direction) < 0.2:
+            continue
+
+        if distance < best_distance:
+            best_distance = distance
+            best = enemy
+
+    if best == null:
         return
 
-    var target_direction := offset.normalized()
-    if target_direction == Vector2.ZERO or facing.dot(target_direction) < 0.2:
-        return
-
-    if _target.take_damage(attack_damage, facing):
+    if best.take_damage(attack_damage, facing):
         _has_hit = true
-        attack_hit.emit(_target, attack_damage)
+        _target = best
+        attack_hit.emit(best, attack_damage)
 
 
 func _draw() -> void:

@@ -7,6 +7,15 @@ const OBSTACLES := [
     {"position": Vector2(1210.0, 780.0), "size": Vector2(210.0, 42.0)},
     {"position": Vector2(1790.0, 440.0), "size": Vector2(150.0, 42.0)},
 ]
+const PACK := [
+    {"position": Vector2(600.0, 270.0), "difficulty": MeadowEnemy.Difficulty.SCOUT},
+    {"position": Vector2(980.0, 430.0), "difficulty": MeadowEnemy.Difficulty.SCOUT},
+    {"position": Vector2(390.0, 920.0), "difficulty": MeadowEnemy.Difficulty.HUNTER},
+    {"position": Vector2(1480.0, 640.0), "difficulty": MeadowEnemy.Difficulty.HUNTER},
+    {"position": Vector2(760.0, 1120.0), "difficulty": MeadowEnemy.Difficulty.SCOUT},
+    {"position": Vector2(1980.0, 300.0), "difficulty": MeadowEnemy.Difficulty.BRUTE},
+    {"position": Vector2(2080.0, 1120.0), "difficulty": MeadowEnemy.Difficulty.HUNTER},
+]
 
 @onready var player: MeadowPlayer = $Player
 @onready var enemy: MeadowEnemy = $Enemy
@@ -17,15 +26,16 @@ const OBSTACLES := [
 func _ready() -> void:
     Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
     _build_world_collisions()
+    _spawn_pack()
 
-    player.set_enemy_target(enemy)
     player.attack_started.connect(_on_player_attack_started)
     player.attack_hit.connect(_on_player_attack_hit)
-    enemy.health_changed.connect(_on_enemy_health_changed)
-    enemy.defeated.connect(_on_enemy_defeated)
-
-    hud.set_enemy_health(enemy.health, enemy.max_health)
+    hud.bind_player(player, WORLD_SIZE)
     queue_redraw()
+
+
+func _process(_delta: float) -> void:
+    hud.set_tracked_enemy(player.get_focus_enemy())
 
 
 func _draw() -> void:
@@ -98,6 +108,27 @@ func _add_boundary(center: Vector2, size: Vector2, node_name: String) -> void:
     obstacles.add_child(body)
 
 
+func _spawn_pack() -> void:
+    var first_spec: Dictionary = PACK[0]
+    enemy.position = first_spec["position"]
+    enemy.apply_difficulty(first_spec["difficulty"])
+    _wire_enemy(enemy)
+
+    for index in range(1, PACK.size()):
+        var spec: Dictionary = PACK[index]
+        var spawned := enemy.duplicate() as MeadowEnemy
+        spawned.name = "Enemy%d" % index
+        spawned.position = spec["position"]
+        add_child(spawned)
+        spawned.apply_difficulty(spec["difficulty"])
+        _wire_enemy(spawned)
+
+
+func _wire_enemy(foe: MeadowEnemy) -> void:
+    if not foe.defeated.is_connected(_on_enemy_defeated):
+        foe.defeated.connect(_on_enemy_defeated)
+
+
 func _on_player_attack_started() -> void:
     hud.show_message("SWORD SWING")
 
@@ -106,9 +137,7 @@ func _on_player_attack_hit(_target: MeadowEnemy, _damage: int) -> void:
     hud.show_message("HIT!")
 
 
-func _on_enemy_health_changed(current_health: int, maximum_health: int) -> void:
-    hud.set_enemy_health(current_health, maximum_health)
-
-
 func _on_enemy_defeated() -> void:
     hud.show_message("ENEMY DEFEATED")
+    if player.get_focus_enemy() == null:
+        hud.show_message("MEADOW CLEARED")
