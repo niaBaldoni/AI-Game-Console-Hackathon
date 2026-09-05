@@ -36,7 +36,6 @@ func _ready() -> void:
 	collision_layer = 0
 	collision_mask = 1
 	monitoring = true
-	monitorable = false
 
 	var collision := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
