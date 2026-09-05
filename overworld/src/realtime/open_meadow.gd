@@ -245,11 +245,15 @@ func _ensure_host_mcp_files() -> void:
     var app_root := ProjectSettings.globalize_path("res://")
     var runtime_directory := app_root.path_join("runtime-mcp")
     var cursor_directory := app_root.path_join(".cursor")
+    var rules_directory := cursor_directory.path_join("rules")
     if DirAccess.make_dir_recursive_absolute(runtime_directory) != OK:
         push_warning("Open Meadow could not create the runtime MCP directory")
         return
     if DirAccess.make_dir_recursive_absolute(cursor_directory) != OK:
         push_warning("Open Meadow could not create the Cursor config directory")
+        return
+    if DirAccess.make_dir_recursive_absolute(rules_directory) != OK:
+        push_warning("Open Meadow could not create the Cursor rules directory")
         return
 
     var server_source := FileAccess.get_file_as_string("res://runtime-mcp/server.py")
@@ -260,6 +264,10 @@ func _ensure_host_mcp_files() -> void:
 
     _write_host_file(runtime_directory.path_join("server.py"), server_source)
     _write_host_file(runtime_directory.path_join("game_client.py"), client_source)
+
+    var rule_source := FileAccess.get_file_as_string("res://runtime-mcp/summer-runtime.mdc")
+    if not rule_source.is_empty():
+        _write_host_file(rules_directory.path_join("summer-runtime.mdc"), rule_source)
 
     var config := {
         "mcpServers": {
