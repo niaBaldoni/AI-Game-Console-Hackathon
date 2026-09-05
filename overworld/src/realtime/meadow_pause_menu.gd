@@ -11,7 +11,7 @@ enum Mode { TITLE, PAUSED, DEFEATED }
 ## Set true before reload_current_scene() to skip the title and drop into play.
 static var start_in_game: bool = false
 
-const PANEL_SIZE := Vector2(420.0, 318.0)
+const PANEL_SIZE := Vector2(420.0, 348.0)
 const GOLD := Color("#f2c14e")
 const INK := Color(0.08, 0.12, 0.16, 0.94)
 const MIST := Color("#d8e7ff")
@@ -22,6 +22,7 @@ var _ignore_pause_frames: int = 0
 var _title_label: Label
 var _subtitle_label: Label
 var _hint_label: Label
+var _tutorial_label: Label
 var _primary_button: Button
 var _restart_button: Button
 var _quit_button: Button
@@ -110,10 +111,12 @@ func _refresh_copy() -> void:
     match _mode:
         Mode.TITLE:
             _title_label.text = "OPEN MEADOW"
-            _subtitle_label.text = "A quiet field. A sharp blade."
+            _subtitle_label.text = "Four lands. Three hearts."
             _primary_button.text = "PLAY"
             _restart_button.visible = false
             _hint_label.text = "JOYSTICK SELECT    A CONFIRM"
+            _tutorial_label.visible = true
+            _tutorial_label.text = "JOYSTICK WALK\nA TAP SWING   HOLD A SPIN\nB PAUSE   THREE HEARTS"
         Mode.DEFEATED:
             _title_label.text = "YOU FELL"
             _subtitle_label.text = "Walk back, or take another swing."
@@ -121,6 +124,7 @@ func _refresh_copy() -> void:
             _restart_button.visible = true
             _restart_button.text = "RESTART"
             _hint_label.text = "JOYSTICK SELECT    A CONFIRM    B BACK"
+            _tutorial_label.visible = false
         Mode.PAUSED:
             _title_label.text = "PAUSED"
             _subtitle_label.text = "Roads still. Radar holds north."
@@ -128,6 +132,7 @@ func _refresh_copy() -> void:
             _restart_button.visible = true
             _restart_button.text = "RESTART"
             _hint_label.text = "JOYSTICK SELECT    A CONFIRM    B PLAY"
+            _tutorial_label.visible = false
     _refresh_focus_neighbors()
 
 
@@ -203,26 +208,31 @@ func _build_ui() -> void:
 
     var accent := ColorRect.new()
     accent.position = Vector2(18.0, 18.0)
-    accent.size = Vector2(8.0, 282.0)
+    accent.size = Vector2(8.0, 312.0)
     accent.color = GOLD
     accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
     panel.add_child(accent)
 
-    _title_label = _make_label(panel, "OPEN MEADOW", Vector2(40.0, 18.0), 28, GOLD)
-    _subtitle_label = _make_label(panel, "A quiet field. A sharp blade.", Vector2(40.0, 54.0), 14, MIST)
+    _title_label = _make_label(panel, "OPEN MEADOW", Vector2(40.0, 14.0), 28, GOLD)
+    _subtitle_label = _make_label(panel, "Four lands. Three hearts.", Vector2(40.0, 48.0), 14, MIST)
 
-    _primary_button = _make_button(panel, "PLAY", Vector2(40.0, 96.0), _on_primary_pressed)
-    _restart_button = _make_button(panel, "RESTART", Vector2(40.0, 148.0), _on_restart_pressed)
-    _quit_button = _make_button(panel, "QUIT", Vector2(40.0, 200.0), _on_quit_pressed)
+    _tutorial_label = _make_label(panel, "", Vector2(40.0, 74.0), 13, Color("#fff1c7"))
+    _tutorial_label.size = Vector2(340.0, 58.0)
+    _tutorial_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+
+    _primary_button = _make_button(panel, "PLAY", Vector2(40.0, 136.0), _on_primary_pressed)
+    _restart_button = _make_button(panel, "RESTART", Vector2(40.0, 186.0), _on_restart_pressed)
+    _quit_button = _make_button(panel, "QUIT", Vector2(40.0, 236.0), _on_quit_pressed)
 
     _hint_label = _make_label(
         panel,
         "JOYSTICK SELECT    A CONFIRM",
-        Vector2(40.0, 262.0),
+        Vector2(40.0, 292.0),
         13,
         Color("#fff1c7")
     )
     _hint_label.size = Vector2(360.0, 28.0)
+    panel.position = Vector2(270.0, 96.0)
     _refresh_focus_neighbors()
 
 

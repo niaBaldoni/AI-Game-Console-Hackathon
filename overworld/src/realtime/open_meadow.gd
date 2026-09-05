@@ -65,18 +65,30 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-    draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color("#6ea85a"))
+    for region: Dictionary in MeadowWorld.regions():
+        var region_rect: Rect2 = region["rect"]
+        var fill: Color = region["fill"]
+        var dot: Color = region["dot"]
+        draw_rect(region_rect, fill)
+        var start_x := int(region_rect.position.x)
+        var start_y := int(region_rect.position.y)
+        var end_x := int(region_rect.end.x)
+        var end_y := int(region_rect.end.y)
+        for x in range(start_x, end_x, 64):
+            for y in range(start_y, end_y, 64):
+                var tile_index := floori(float(x) / 64.0) + floori(float(y) / 64.0)
+                if tile_index % 3 == 0:
+                    draw_rect(Rect2(x + 8, y + 8, 28, 18), dot)
 
-    for x in range(0, int(WORLD_SIZE.x), 64):
-        for y in range(0, int(WORLD_SIZE.y), 64):
-            var tile_index := floori(float(x) / 64.0) + floori(float(y) / 64.0)
-            if tile_index % 3 == 0:
-                draw_rect(Rect2(x + 8, y + 8, 28, 18), Color("#74b761"))
+        var label_position := region_rect.position + Vector2(36.0, 36.0)
+        var font := ThemeDB.fallback_font
+        if font != null:
+            draw_string(font, label_position, str(region["name"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, region["label"])
 
-    draw_rect(Rect2(0.0, 565.0, WORLD_SIZE.x, 76.0), Color("#d7a36d"))
-    draw_rect(Rect2(0.0, 594.0, WORLD_SIZE.x, 18.0), Color("#e5b77a"))
-    draw_rect(Rect2(1080.0, 0.0, 74.0, WORLD_SIZE.y), Color("#d7a36d"))
-    draw_rect(Rect2(1108.0, 0.0, 18.0, WORLD_SIZE.y), Color("#e5b77a"))
+    draw_rect(Rect2(0.0, MeadowWorld.ROAD_Y, WORLD_SIZE.x, MeadowWorld.ROAD_WIDTH), Color("#d7a36d"))
+    draw_rect(Rect2(0.0, MeadowWorld.ROAD_Y + 29.0, WORLD_SIZE.x, 18.0), Color("#e5b77a"))
+    draw_rect(Rect2(MeadowWorld.ROAD_X, 0.0, MeadowWorld.ROAD_WIDTH, WORLD_SIZE.y), Color("#d7a36d"))
+    draw_rect(Rect2(MeadowWorld.ROAD_X + 28.0, 0.0, 18.0, WORLD_SIZE.y), Color("#e5b77a"))
 
     for obstacle: Dictionary in OBSTACLES:
         var obstacle_position: Vector2 = obstacle["position"]
@@ -101,8 +113,19 @@ func _draw() -> void:
         Vector2(2180.0, 260.0),
     ]
     for tree_position: Vector2 in trees:
-        draw_circle(tree_position + Vector2(0.0, 12.0), 24.0, Color("#416f4a"))
-        draw_circle(tree_position, 19.0, Color("#31724c"))
+        var canopy := Color("#416f4a")
+        var leaf := Color("#31724c")
+        if tree_position.y < MeadowWorld.ROAD_Y and tree_position.x < MeadowWorld.ROAD_X:
+            canopy = Color("#d9f4ff")
+            leaf = Color("#b7e4f4")
+        elif tree_position.y < MeadowWorld.ROAD_Y:
+            canopy = Color("#c45c32")
+            leaf = Color("#e0893a")
+        elif tree_position.x < MeadowWorld.ROAD_X:
+            canopy = Color("#5b3d86")
+            leaf = Color("#8d63c4")
+        draw_circle(tree_position + Vector2(0.0, 12.0), 24.0, canopy)
+        draw_circle(tree_position, 19.0, leaf)
         draw_rect(Rect2(tree_position + Vector2(-4.0, 14.0), Vector2(8.0, 17.0)), Color("#8a5945"))
 
     draw_rect(Rect2(0.0, 0.0, WORLD_SIZE.x, 10.0), Color("#263238"))

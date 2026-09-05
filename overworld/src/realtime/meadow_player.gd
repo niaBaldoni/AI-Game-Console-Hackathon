@@ -10,7 +10,7 @@ signal damaged(amount: int)
 signal defeated
 
 @export var move_speed: float = 190.0
-@export var max_health: int = 6
+@export var max_health: int = 3
 @export var attack_damage: int = 1
 @export var attack_reach: float = 52.0
 @export var attack_width: float = 20.0
