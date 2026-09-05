@@ -2,7 +2,7 @@
   "mcpServers": {
     "summer-runtime": {
       "command": "python3",
-      "args": ["${workspaceFolder}/../runtime-mcp/server.py"],
+      "args": ["../runtime-mcp/server.py"],
       "env": {
         "SUMMER_GAME_MCP_HOST": "127.0.0.1",
         "SUMMER_GAME_MCP_PORT": "8765",

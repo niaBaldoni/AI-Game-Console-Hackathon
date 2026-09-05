@@ -273,7 +273,10 @@ func _ensure_host_mcp_files() -> void:
         "mcpServers": {
             "summer-runtime": {
                 "command": "python3",
-                "args": ["$" + "{workspaceFolder}/runtime-mcp/server.py"],
+                # The Uno Q Cursor CLI does not expand ${workspaceFolder} in
+                # stdio command arguments. Keep this absolute path aligned
+                # with the App Lab mount used by the file bridge.
+                "args": ["/home/arduino/ArduinoApps/open-meadow/game/runtime-mcp/server.py"],
                 "env": {
                     "SUMMER_GAME_MCP_HOST": "127.0.0.1",
                     "SUMMER_GAME_MCP_PORT": "8765",
