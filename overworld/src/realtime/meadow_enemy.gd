@@ -31,6 +31,7 @@ const FIREBALL_SCENE := preload("res://src/realtime/meadow_fireball.gd")
 @export var body_radius: float = 18.0
 @export var keep_distance: float = 210.0
 @export var fireball_speed: float = 240.0
+@export var despawn_delay: float = 1.5
 
 var health: int = 0
 var facing: Vector2 = Vector2.DOWN
@@ -40,6 +41,7 @@ var _knockback_velocity: Vector2 = Vector2.ZERO
 var _knockback_timer: float = 0.0
 var _hurt_timer: float = 0.0
 var _is_defeated: bool = false
+var _despawn_timer: float = 0.0
 var _is_aggro: bool = false
 var _body_color: Color = Color("#d95763")
 var _attack_active: bool = false
@@ -107,6 +109,9 @@ func _sync_collision() -> void:
 func _physics_process(delta: float) -> void:
 	if _is_defeated:
 		velocity = Vector2.ZERO
+		_despawn_timer += delta
+		if _despawn_timer >= despawn_delay:
+			queue_free()
 		return
 
 	_attack_cooldown_remaining = maxf(_attack_cooldown_remaining - delta, 0.0)
