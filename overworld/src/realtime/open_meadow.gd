@@ -4,6 +4,7 @@ class_name OpenMeadow
 const WORLD_SIZE := Vector2(2400.0, 1350.0)
 const MAX_ACTIVE_ENEMIES := 50
 const DEFEATS_TO_WIN := 25
+const INTENSITY_RAMP_SECONDS := 120.0
 const SPAWN_MARGIN := 24.0
 const OBSTACLES := [
     {"position": Vector2(890.0, 350.0), "size": Vector2(170.0, 42.0)},
@@ -30,6 +31,8 @@ var _next_enemy_runtime_id: int = 1
 var _summary_refresh_timer: float = 0.0
 var defeated_enemy_count: int = 0
 var game_won: bool = false
+var round_elapsed_seconds: float = 0.0
+var intensity: float = 0.0
 
 
 func _ready() -> void:
@@ -54,6 +57,7 @@ func _ready() -> void:
     hud.bind_player(player, WORLD_SIZE)
     hud.set_player_health(player.health, player.max_health)
     hud.set_defeat_progress(defeated_enemy_count, DEFEATS_TO_WIN)
+    hud.set_round_intensity(round_elapsed_seconds, intensity)
     AgentBridge.enemy_spawn_requested.connect(_on_enemy_spawn_requested)
     _setup_pause_menu()
 
@@ -62,6 +66,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+    if not game_won:
+        round_elapsed_seconds += delta
+        intensity = clampf(round_elapsed_seconds / INTENSITY_RAMP_SECONDS, 0.0, 1.0)
+        hud.set_round_intensity(round_elapsed_seconds, intensity)
+
     _summary_refresh_timer -= delta
     if _summary_refresh_timer <= 0.0:
         _summary_refresh_timer = 0.1
@@ -353,6 +362,8 @@ func _publish_agent_summary() -> void:
         "defeated_enemies": defeated_enemy_count,
         "defeat_target": DEFEATS_TO_WIN,
         "victory": game_won,
+        "round_elapsed_seconds": round_elapsed_seconds,
+        "intensity": intensity,
     })
 
 

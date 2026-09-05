@@ -9,6 +9,7 @@ var _health_fill: ColorRect
 var _hearts: MeadowHearts
 var _minimap: MeadowMinimap
 var _defeat_label: Label
+var _intensity_label: Label
 var _message_time_remaining: float = 0.0
 
 
@@ -66,6 +67,16 @@ func set_defeat_progress(current_count: int, target_count: int) -> void:
 	_defeat_label.text = "DEFEATS  %d / %d" % [current_count, target_count]
 
 
+func set_round_intensity(elapsed_seconds: float, intensity: float) -> void:
+	if _intensity_label == null:
+		return
+
+	_intensity_label.text = "ROUND  %s  INTENSITY %d%%" % [
+		_format_round_time(elapsed_seconds),
+		roundi(intensity * 100.0),
+	]
+
+
 func show_message(message: String) -> void:
 	if _message_label == null:
 		return
@@ -90,6 +101,8 @@ func _build_ui() -> void:
 
 	_defeat_label = _make_label("DEFEATS  0 / 25", Vector2(16.0, 58.0), 14)
 	_defeat_label.add_theme_color_override("font_color", Color("#f2c14e"))
+	_intensity_label = _make_label("ROUND  00:00  INTENSITY 0%", Vector2(16.0, 80.0), 11)
+	_intensity_label.add_theme_color_override("font_color", Color("#d8e7ff"))
 
 	_minimap = MeadowMinimap.new()
 	_minimap.name = "Radar"
@@ -126,3 +139,10 @@ func _make_label(value: String, label_position: Vector2, font_size: int) -> Labe
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_ui_root.add_child(label)
 	return label
+
+
+func _format_round_time(elapsed_seconds: float) -> String:
+	var total_seconds := maxi(floori(elapsed_seconds), 0)
+	var minutes := total_seconds / 60
+	var seconds := total_seconds % 60
+	return "%02d:%02d" % [minutes, seconds]

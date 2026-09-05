@@ -38,7 +38,8 @@ TOOLS = [
         "name": "get_game_state",
         "description": (
             "Read the compact state that the running Summer game publishes "
-            "for its agent-controlled opponent."
+            "for its agent-controlled opponent, including active-round timing "
+            "and intensity."
         ),
         "inputSchema": {
             "type": "object",

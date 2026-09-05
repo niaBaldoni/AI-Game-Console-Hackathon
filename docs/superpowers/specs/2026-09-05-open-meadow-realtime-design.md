@@ -199,3 +199,10 @@ HUD shows `DEFEATS 0 / 25`; the 25th defeat pauses the meadow and opens the
 existing menu as `MEADOW CLEARED`. Button A restarts the run and button B
 returns to the title. The runtime MCP summary publishes the same progress and
 victory flag.
+
+## Update: active round timer and agent-owned intensity (5 Sep 2026)
+
+The runtime MCP summary now exposes `round_elapsed_seconds` and a linear
+`intensity` value from 0.0 to 1.0. The timer advances only during active play
+and reaches maximum intensity after 120 seconds. The game does not spawn
+enemies automatically; the agent decides when and which enemies to request.
