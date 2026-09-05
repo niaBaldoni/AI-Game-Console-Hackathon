@@ -114,6 +114,75 @@ The implementation is complete only after all of these checks pass:
 
 ## Deferred work
 
-Agent-controlled enemy decisions, MCP state publication, enemy pursuit/attack,
-multiple enemies, inventory, map transitions, and deletion of the legacy
-turn-based files are intentionally deferred until this small loop is stable.
+Agent-controlled enemy decisions, MCP state publication, inventory, map
+transitions, and deletion of the legacy turn-based files are intentionally
+deferred until this small loop is stable.
+
+## Update: enemy combat (5 Sep 2026)
+
+We kept the meadow, player slash, HUD, and board constraints above. Enemies are
+no longer idle dummy targets.
+
+**What changed**
+
+- Enemies face the player when they are in range, then attack.
+- Two kinds, still using the existing placeholder shapes:
+  - **Melee** — smaller detect range, slow walk, player-like slash, larger HP
+    (6).
+  - **Mage** — larger detect range, keeps distance, shoots fireballs, smaller HP
+    (3).
+- Several of both kinds spawn across the meadow (`PACK` in
+  `src/realtime/open_meadow.gd`).
+- The player now has HP (6) and i-frames; 0 HP is a fall. Fireballs live in
+  `src/realtime/meadow_fireball.gd`.
+- Radar colors: red melee, purple mage.
+
+Tunables (speed, ranges, fire rate) are first-pass and meant to be iterated.
+Original idle-enemy behavior in the sections above is historical.
+
+## Update: brute/mage rebalance and charged fireball (5 Sep 2026)
+
+Neither kind is a boss. Brute HP is 3 and walk speed is 46 (player is 190).
+Mage HP is 2 and walk speed is 118, always slower than the player. Mages
+sometimes stop and charge a larger fireball (~0.9s, 2 damage); a hit interrupts
+the charge. MCP `spawn_enemy` can request `kind` brute or mage.
+
+## Update: pause, title, and defeat menu (5 Sep 2026)
+
+`MeadowPauseMenu` is a mouse-free overlay. Title starts on PLAY. In play, B
+opens pause. After defeat, BACK returns to the title instead of dumping the
+player into a dead scene. Joystick moves focus; A confirms. Restart reloads
+the meadow and skips the title via `MeadowPauseMenu.start_in_game`.
+
+## Update: charge spin (5 Sep 2026)
+
+Tap A remains a directional slash. Hold A past 0.25s, then release, for a
+radial spin (2 base damage). Charge slows movement. Design detail lives in
+`docs/superpowers/specs/2026-09-05-charge-spin-attack-design.md`. Original
+“A is only a short slash” copy above is historical.
+
+## Update: colored lands and HUD hearts (5 Sep 2026)
+
+The meadow is four readable regions (Iceland, Fireland, Purpleland,
+Grassland). HUD hearts replaced a numeric-only life readout. Early combat
+used three hearts; that count is historical.
+
+## Update: longer lives, pickups, and retro menus (5 Sep 2026)
+
+We kept the meadow combat, radar, pause flow, and board constraints above.
+
+**What changed**
+
+- Player starts at **five hearts**, hurt immunity ~1.05s, cap of six hearts.
+- `MeadowPickup` instances spawn across the lands:
+  - pink heart: restore one heart, or add a sixth if already full
+  - gold star: ~9s power (plus one damage on slash and spin)
+  - blue ring: ~7s shield (blocks a hit, short extra immunity)
+- Pickups bob with cheap `_draw` circles/arcs; power/shield add a gold wash
+  or cyan ring on the player. Radar shows pickup blips.
+- Title, pause, HUD labels use a retro system font (Press Start 2P when
+  present, else Monaco/Menlo/Courier) plus outlines.
+
+Original deferred-work lines about inventory remain historical; hearts and
+boosters are now in the meadow, not a full inventory system.
+

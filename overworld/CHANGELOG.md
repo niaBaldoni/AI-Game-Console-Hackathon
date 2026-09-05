@@ -1,5 +1,17 @@
 # Changelog
 
+Active game: **Open Meadow** (`src/realtime/`). Entries below v0.3.x describe
+the retired OpenRPG template and are kept for history only.
+
+## Open Meadow (5 Sep 2026)
+
+- Real-time meadow with joystick move, A slash / hold-A spin, B pause.
+- Brute and mage enemies, fireballs, north-up radar, four colored lands.
+- Five starting hearts, map hearts, gold power and blue shield pickups.
+- Retro outlined menus (title / pause / defeat). Runtime MCP spawn and state.
+- Legacy turn-based OpenRPG assets were removed from the active build; see
+  branch `main-pre-legacy-cleanup` if that tree is needed.
+
 ## v0.3.4 Combat Rework 🛡️
 
 ### Classic turn-based combat

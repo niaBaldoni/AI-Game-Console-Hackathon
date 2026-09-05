@@ -34,14 +34,33 @@ func _draw() -> void:
     var map_rotation := 0.0
     _draw_world_features(center, radius, map_rotation)
     _draw_enemy_blips(center, radius, map_rotation)
+    _draw_pickup_blips(center, radius, map_rotation)
     _draw_player_arrow(center)
     _draw_compass(center, radius, map_rotation)
 
 
 func _draw_world_features(center: Vector2, radius: float, map_rotation: float) -> void:
+    for region: Dictionary in MeadowWorld.regions():
+        _draw_world_region(center, radius, map_rotation, region["rect"], region["fill"])
     var road_color := Color("#d7a36d")
     _draw_world_segment(center, radius, map_rotation, Vector2(0.0, 594.0), Vector2(world_size.x, 594.0), road_color, 3.0)
     _draw_world_segment(center, radius, map_rotation, Vector2(1108.0, 0.0), Vector2(1108.0, world_size.y), road_color, 3.0)
+
+
+func _draw_world_region(
+    center: Vector2,
+    radius: float,
+    map_rotation: float,
+    region_rect: Rect2,
+    color: Color
+) -> void:
+    var corners := PackedVector2Array([
+        _world_to_radar(region_rect.position, center, radius, map_rotation, false),
+        _world_to_radar(region_rect.position + Vector2(region_rect.size.x, 0.0), center, radius, map_rotation, false),
+        _world_to_radar(region_rect.end, center, radius, map_rotation, false),
+        _world_to_radar(region_rect.position + Vector2(0.0, region_rect.size.y), center, radius, map_rotation, false),
+    ])
+    draw_colored_polygon(corners, Color(color.r, color.g, color.b, 0.72))
 
 
 func _draw_world_segment(
@@ -74,6 +93,19 @@ func _draw_enemy_blips(center: Vector2, radius: float, map_rotation: float) -> v
         var blip_radius := enemy.get_radar_blip_radius()
         draw_circle(blip, blip_radius + 1.5, Color(0.05, 0.05, 0.05, 0.85))
         draw_circle(blip, blip_radius, enemy.get_radar_color())
+
+
+func _draw_pickup_blips(center: Vector2, radius: float, map_rotation: float) -> void:
+    var tree := get_tree()
+    if tree == null:
+        return
+    for node in tree.get_nodes_in_group("meadow_pickup"):
+        var pickup := node as MeadowPickup
+        if pickup == null:
+            continue
+        var blip := _world_to_radar(pickup.global_position, center, radius, map_rotation, true)
+        draw_circle(blip, 3.2, Color(0.05, 0.05, 0.05, 0.85))
+        draw_circle(blip, 2.4, pickup.get_radar_color())
 
 
 func _draw_player_arrow(center: Vector2) -> void:

@@ -51,6 +51,41 @@ Do not assume the engine, MCP connection, export templates, `adb`, a board, or
 the deployment kit are installed merely because this guide describes them.
 Detect what is present and install or request only what is missing.
 
+## Current project state (5 Sep 2026)
+
+- The active project is [`overworld/`](overworld/). Its main scene is
+  `res://src/realtime/open_meadow.tscn` (`Open Meadow`), a 2400×1350 2D meadow
+  with four colored lands, free movement, tap-A slash and hold-A charge spin,
+  melee brutes and mage fireballs, five starting hearts, map hearts plus
+  power/shield pickups, a north-up radar, and a retro title/pause/defeat menu.
+  Player-facing controls are **joystick to move, A to swing/spin, B to pause**.
+- The turn-based OpenRPG template is no longer part of the active build. Its
+  legacy Dialogic/combat/field assets were intentionally removed; the safety
+  branch `main-pre-legacy-cleanup` retains the pre-cleanup tree if historical
+  comparison is needed.
+- Runtime MCP lives in `runtime-mcp/` and is copied into
+  `overworld/runtime-mcp/` for export. `AgentBridge` is an autoload, and the
+  stdio server exposes `get_game_state`, `set_agent_intent`, and `spawn_enemy`.
+  On release, the game self-seeds the server, Cursor rule, and `.cursor/mcp.json`
+  into the App Lab mount, so a source checkout is not needed on the board.
+- The Uno Q Cursor CLI does not expand `${workspaceFolder}` in stdio arguments.
+  The release-generated config therefore uses the absolute server path
+  `/home/arduino/ArduinoApps/open-meadow/game/runtime-mcp/server.py` and the
+  shared bridge directory
+  `/home/arduino/ArduinoApps/open-meadow/game/.runtime-mcp`. Run Cursor from
+  `/home/arduino/ArduinoApps/open-meadow/game`, approve the server with
+  `agent mcp enable summer-runtime`, then inspect it with
+  `agent mcp list-tools summer-runtime`.
+- `origin/main` tracks the current Open Meadow slice (pause menu, charge spin,
+  lands, longer lives, pickups, retro menus, and MCP path fix). Editor-local
+  `overworld/project.godot` rewrites that drop `import_etc2_astc` must not be
+  committed. The board may still be on an earlier export; re-export and
+  redeploy before claiming the latest gameplay is on hardware.
+- Verified on the host: a clean Summer headless import for the pickup scripts
+  and all three tests in `runtime-mcp/tests` pass. A connected-display,
+  physical-controller playtest is still required before calling the device
+  delivery complete.
+
 ## Required project configuration
 
 Apply this immediately after project creation, before adding project-specific
