@@ -30,11 +30,11 @@ const FIREBALL_SCENE := preload("res://src/realtime/meadow_fireball.gd")
 @export var knockback_duration: float = 0.16
 @export var body_radius: float = 18.0
 @export var keep_distance: float = 210.0
-@export var fireball_speed: float = 240.0
+@export var fireball_speed: float = 170.0
 @export var charge_chance: float = 0.38
 @export var charge_duration: float = 0.9
 @export var charged_fireball_damage: int = 2
-@export var charged_fireball_speed: float = 210.0
+@export var charged_fireball_speed: float = 145.0
 @export var charged_fireball_radius: float = 16.0
 
 var health: int = 0
@@ -85,18 +85,18 @@ func apply_kind(enemy_kind: Kind) -> void:
         Kind.RANGED:
             max_health = 2
             body_radius = 15.0
-            move_speed = 118.0
+            move_speed = 80.0
             detect_range = 340.0
             attack_range = 280.0
             keep_distance = 200.0
             attack_duration = 0.12
             attack_cooldown = 1.35
             attack_damage = 1
-            fireball_speed = 240.0
+            fireball_speed = 170.0
             charge_chance = 0.38
             charge_duration = 0.9
             charged_fireball_damage = 2
-            charged_fireball_speed = 210.0
+            charged_fireball_speed = 145.0
             charged_fireball_radius = 16.0
             knockback_speed = 150.0
             _body_color = Color("#7a4ad1")

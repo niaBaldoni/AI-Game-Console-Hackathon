@@ -4,12 +4,17 @@
 [ext_resource type="Script" uid="uid://cl4jfvg4nefcw" path="res://src/realtime/meadow_player.gd" id="2_player"]
 [ext_resource type="Script" uid="uid://8ka1om6dqfma" path="res://src/realtime/meadow_enemy.gd" id="3_enemy"]
 [ext_resource type="Script" uid="uid://c3t0u0yea2l8j" path="res://src/realtime/meadow_hud.gd" id="4_hud"]
+[ext_resource type="Shader" uid="uid://b4xtb643oj5u1" path="res://src/realtime/retro_pixel.gdshader" id="5_retro_pixel"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(18, 18)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_enemy"]
 size = Vector2(24, 24)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_retro_pixel"]
+shader = ExtResource("5_retro_pixel")
+shader_parameter/pixel_resolution = Vector2(320, 180)
 
 [node name="OpenMeadow" type="Node2D" unique_id=130014148]
 script = ExtResource("1_meadow")
@@ -39,6 +44,18 @@ script = ExtResource("3_enemy")
 shape = SubResource("RectangleShape2D_enemy")
 
 [node name="Obstacles" type="Node2D" parent="." unique_id=1761182193]
+
+[node name="RetroPixelWorld" type="CanvasLayer" parent="." unique_id=381067331]
+layer = 5
+
+[node name="PixelPass" type="ColorRect" parent="RetroPixelWorld" unique_id=409014431]
+material = SubResource("ShaderMaterial_retro_pixel")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1299340118]
 script = ExtResource("4_hud")
